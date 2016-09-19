@@ -9,8 +9,8 @@
 // Global state
 
 #define PIN_COUNT (sizeof(Pins) / sizeof(Pins[0]))
-int    PinVal[PIN_COUNT];     // Last value read, indexed by pin
-Bounce PinBounce[PIN_COUNT];          // Debouncer state
+int    PinVal[PIN_COUNT];         // Last value read, indexed by pin
+Bounce PinBounce[PIN_COUNT];      // Debouncer state
 int    OutputState[] = {0, 0, 0}; // Last value written, idx by controller
 
 unsigned NumControllers = sizeof(Controllers) / sizeof(Controllers[0]);
@@ -91,7 +91,14 @@ void loop() {
         break;
       case Continuous:
         // Scale the input value to the output
-        state = val;  // 1:1 is easiest
+        state = val;
+        if (state < p->Min) {
+          state = p->Min;
+        }
+        else if (state > p->Max) {
+          state = p->Max;
+        }
+        state = 1023 * (state - p->Min) / (p->Max - p->Min);
         break;
       }
       PinVal[PinNum] = val; // Save for next time through the loop
@@ -100,7 +107,7 @@ void loop() {
       if (OutputState[i] != state) {
         OutputState[i] = state;
         Serial.print(String("Pin ") + p->Num + ":" + val + "  ");
-        Serial.println(String("Ctl ") + i + ":" + state);
+        Serial.println(String("Ctl ") + i + ":" + state / 8); // scale for MIDI
       }
     }
   }

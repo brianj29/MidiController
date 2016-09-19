@@ -18,6 +18,8 @@ typedef enum _pinUse {
 typedef struct _pin {
   PinType Type;
   int     Num;  // Hardware pin number
+  int     Min;  // Min/max values, for calibration
+  int     Max;
 } Pin;
 
 extern Pin Pins[];

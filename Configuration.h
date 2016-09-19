@@ -4,10 +4,10 @@
 // Input pins.  Edit these to reflect the physical board
 
 Pin Pins[] = {
-  // Type,      pin number
-  {Analog,        0},
-  {DigitalPullup, 12},
-  {DigitalPullup, 11}
+  // Type,      pin number   min   max
+  {Analog,        0,         133,  680},
+  {DigitalPullup, 12,        0,    1023},
+  {DigitalPullup, 11,        0,    1023}
 };
 
 
