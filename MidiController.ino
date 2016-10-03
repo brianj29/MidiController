@@ -1,3 +1,5 @@
+#include <MIDI.h>
+
 #include <Bounce2.h>
 
 // Midi controller
@@ -48,6 +50,12 @@ void setup() {
 }
 
 void loop() {
+
+  // Consume any incoming MIDI data, to keep from hanging the host
+
+  while (usbMIDI.read()) {
+    // Do nothing
+  }
 
   // Process each controller
 
@@ -108,6 +116,7 @@ void loop() {
         OutputState[i] = state;
         Serial.print(String("Pin ") + p->Num + ":" + val + "  ");
         Serial.println(String("Ctl ") + i + ":" + state / 8); // scale for MIDI
+        usbMIDI.sendControlChange(c->Controller, state / 8, c->Channel);
       }
     }
   }

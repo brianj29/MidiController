@@ -30,5 +30,7 @@ extern Pin Pins[];
 typedef struct _controller {
   ControllerType  Type;
   int     Pin;  // Input Pins array index
+  int     Channel; // MIDI channel
+  int     Controller;  // MIDI controller number
 } Controller;
 

@@ -14,9 +14,9 @@ Pin Pins[] = {
 // Output MIDI controllers
 
 Controller Controllers[] = {
-  // Type, Pin array idx
-  {Continuous, 0},
-  {Momentary,  1},
-  {Latching,   2}
+  // Type, Pin array idx, channel, controller
+  {Continuous, 0, 1, 1 /* modwheel */},
+  {Momentary,  1, 1, 0x40 /* damper */},
+  {Latching,   2, 1, 0x4 /* foot cntlr */}
 };
 
