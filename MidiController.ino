@@ -121,5 +121,8 @@ void loop() {
     }
   }
 
+  // Send any queued MIDI data
+  usbMIDI.send_now();
+
   delay(100); // FIXME:  use rate-limiting on MIDI interface
 }
