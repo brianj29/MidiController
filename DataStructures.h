@@ -28,9 +28,9 @@ typedef enum _controllerType {
 } ControllerType;
 
 typedef enum _eventType {
-  Note       = 0,
-  Controller = 1,
-  Program    = 2,
+  NoteEventType       = 0,
+  ControllerEventType = 1,
+  ProgramEventType    = 2,
   // FIXME:  add others?
 } EventType;
 
@@ -65,17 +65,22 @@ typedef struct _ProgramEvent {
 typedef struct _events {
   int  Length; // in events
   union _event {
-    GenericEvent,
-    NoteEvent,
-    ControllerEvent,
-    ProgramEvent,
+    GenericEvent Generic;
+    NoteEvent Note;
+    ControllerEvent Controller;
+    ProgramEvent Program;
   } *Event;
 } Events;
 
 typedef struct _controller {
   ControllerType  Type;
   int     Pin;  // Input Pins[] array index
+#if 1 // old format
+  int     Channel; // MIDI channel
+  int     Controller;  // MIDI controller number
+#else
   Events  On;   // Events sent when switch turns "on"
   Events  Off;  // Events sent when switch turns "off"
+#endif
 } Controller;
 

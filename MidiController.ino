@@ -17,7 +17,6 @@ int    OutputState[] = {0, 0, 0}; // Last value written, idx by controller
 
 unsigned NumControllers = sizeof(Controllers) / sizeof(Controllers[0]);
 
-
 void setup() {
   Serial.begin(38400);  // For debugging
 
@@ -26,6 +25,11 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
 
+  // Initialize MIDI
+  
+  MIDI.begin(MIDI_CHANNEL_OMNI);
+  MIDI.turnThruOff();
+  
   // Configure the input pins
 
   for (unsigned i = 0; i < PIN_COUNT; i++) {
@@ -54,6 +58,9 @@ void loop() {
   // Consume any incoming MIDI data, to keep from hanging the host
 
   while (usbMIDI.read()) {
+    // Do nothing
+  }
+  while (MIDI.read()) {
     // Do nothing
   }
 
@@ -117,11 +124,12 @@ void loop() {
         Serial.print(String("Pin ") + p->Num + ":" + val + "  ");
         Serial.println(String("Ctl ") + i + ":" + state / 8); // scale for MIDI
         usbMIDI.sendControlChange(c->Controller, state / 8, c->Channel);
+        MIDI.sendControlChange(c->Controller, state / 8, c->Channel);
       }
     }
   }
 
-  // Send any queued MIDI data
+  // Send any queued USB MIDI data
   usbMIDI.send_now();
 
   delay(100); // FIXME:  use rate-limiting on MIDI interface
