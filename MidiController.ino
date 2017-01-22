@@ -19,6 +19,7 @@ unsigned NumControllers = sizeof(Controllers) / sizeof(Controllers[0]);
 
 void setup() {
   Serial.begin(38400);  // For debugging
+  while (!Serial) { }   // Wait for USB serial to connect
 
   // Turn on the LED, so we can see the board is on
 
@@ -120,11 +121,35 @@ void loop() {
 
       // Write the output state
       if (OutputState[i] != state) {
+        Events *eventList;
+        
         OutputState[i] = state;
         Serial.print(String("Pin ") + p->Num + ":" + val + "  ");
-        Serial.println(String("Ctl ") + i + ":" + state / 8); // scale for MIDI
-        usbMIDI.sendControlChange(c->Controller, state / 8, c->Channel);
-        MIDI.sendControlChange(c->Controller, state / 8, c->Channel);
+
+        if (c->Type == Continuous || state < 512) {
+          eventList = &c->Off;
+        }
+        else {
+          eventList = &c->On;
+        }
+
+        // Send all events in the event list
+        for (int j = 0; j < eventList->Length; j++) {
+          ControllerEvent *evt;
+          
+          switch (eventList->Event[j].Generic->Type) {
+          case NoteEventType:
+            break;
+          case ControllerEventType:
+            evt = eventList->Event[j].Controller;
+            Serial.println(String("Ctl ") + evt->Channel + "/" + evt->Controller + ": " + evt->Value);
+            usbMIDI.sendControlChange(evt->Controller, evt->Value, evt->Channel);
+            MIDI.sendControlChange(evt->Controller, evt->Value, evt->Channel);
+            break;
+          case ProgramEventType:
+            break;
+          }
+        }
       }
     }
   }
