@@ -121,27 +121,31 @@ void loop() {
 
       // Write the output state
       if (OutputState[i] != state) {
-        Events *eventList;
+        Event *eventList;
+        int   eventListLen;
         
         OutputState[i] = state;
         Serial.print(String("Pin ") + p->Num + ":" + val + "  ");
 
         if (c->Type == Continuous || state < 512) {
-          eventList = &c->Off;
+          eventList = c->Off;
+          eventListLen = c->OffLen;
         }
         else {
-          eventList = &c->On;
+          eventList = c->On;
+          eventListLen = c->OnLen;
         }
 
         // Send all events in the event list
-        for (int j = 0; j < eventList->Length; j++) {
+        for (int j = 0; j < eventListLen; j++) {
           ControllerEvent *evt;
-          
-          switch (eventList->Event[j].Generic->Type) {
+
+          Serial.println("Evt " + String(j) + "/" + eventListLen + ": " + eventList[j].Generic.Type);
+          switch (eventList[j].Generic.Type) {
           case NoteEventType:
             break;
           case ControllerEventType:
-            evt = eventList->Event[j].Controller;
+            evt = &eventList[j].Controller;
             Serial.println(String("Ctl ") + evt->Channel + "/" + evt->Controller + ": " + evt->Value);
             usbMIDI.sendControlChange(evt->Controller, evt->Value, evt->Channel);
             MIDI.sendControlChange(evt->Controller, evt->Value, evt->Channel);

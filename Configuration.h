@@ -26,13 +26,13 @@ ControllerEvent ModWheelMaxEvent[] = {
 ControllerEvent DamperOnEvent[] = {
   // Event type, controller, value, channel
   {ControllerEventType, 0x40 /*damper*/, 127, 1},
-  {ControllerEventType, 0x40 /*damper*/, 125, 1}
+  {ControllerEventType, 0x41 /*?*/, 125, 1}
 };
 
 ControllerEvent DamperOffEvent[] = {
   // Event type, controller, value, channel
   {ControllerEventType, 0x40 /*damper*/, 0, 1},
-  {ControllerEventType, 0x40 /*damper*/, 4, 1}
+  {ControllerEventType, 0x41 /*?*/, 4, 1}
 };
 
 ControllerEvent FootOnEvent[] = {
@@ -52,10 +52,10 @@ Controller Controllers[] = {
   {Momentary,  1, 1, 0x40 /* damper */},
   {Latching,   2, 1, 0x4 /* foot cntlr */}
 #else
-  // Type, Pin array idx, "on" events, "off" events
-  {Continuous, 0, {1, ModWheelMinEvent}, {1, ModWheelMaxEvent}},
-  {Momentary,  1, {2, DamperOffEvent}, {2, DamperOnEvent}},
-  {Latching,   2, {1, FootOffEvent}, {1, FootOnEvent}},
+  // Type, Pin array idx, "on" event count, "on" events, "off" event count, "off" events
+  {Continuous, 0, 1, (Event *)ModWheelMinEvent, 1, (Event *)ModWheelMaxEvent},
+  {Momentary,  1, 2, (Event *)DamperOffEvent, 2, (Event *)DamperOnEvent},
+  {Latching,   2, 1, (Event *)FootOffEvent, 1, (Event *)FootOnEvent},
 #endif
 };
 

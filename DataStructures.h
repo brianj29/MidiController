@@ -62,16 +62,12 @@ typedef struct _ProgramEvent {
   uint8_t   Channel;
 } ProgramEvent;
 
-typedef struct _events {
-  int  Length; // in events
-  union _event {
-    void *VoidPtr;
-    GenericEvent *Generic;
-    NoteEvent *Note;
-    ControllerEvent *Controller;
-    ProgramEvent *Program;
-  } Event[1];
-} Events;
+typedef union _event {
+  GenericEvent    Generic;
+  NoteEvent       Note;
+  ControllerEvent Controller;
+  ProgramEvent    Program;
+} Event;
 
 typedef struct _controller {
   ControllerType  Type;
@@ -80,8 +76,11 @@ typedef struct _controller {
   int     Channel; // MIDI channel
   int     Controller;  // MIDI controller number
 #else
-  Events  Off;  // Events sent when switch turns "off"
-  Events  On;   // Events sent when switch turns "on"
+  int     OnLen; // Number of Events in Off
+  Event   *On;   // Events sent when switch turns "on"
+  int     OffLen; // Number of Events in Off
+  Event   *Off;  // Events sent when switch turns "off"
 #endif
 } Controller;
+
 
