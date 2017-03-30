@@ -45,6 +45,8 @@ ControllerEvent FootOffEvent[] = {
   {ControllerEventType, 0x4 /*foot cntlr*/, 0, 1}
 };
 
+#define EVENTS(_x) sizeof(_x) / sizeof(_x[0]), (Event *)(_x)
+
 Controller Controllers[] = {
 #if 0 // Old format
   // Type, Pin array idx, channel, controller
@@ -53,9 +55,9 @@ Controller Controllers[] = {
   {Latching,   2, 1, 0x4 /* foot cntlr */}
 #else
   // Type, Pin array idx, "on" event count, "on" events, "off" event count, "off" events
-  {Continuous, 0, 1, (Event *)ModWheelMinEvent, 1, (Event *)ModWheelMaxEvent},
-  {Momentary,  1, 2, (Event *)DamperOffEvent, 2, (Event *)DamperOnEvent},
-  {Latching,   2, 1, (Event *)FootOffEvent, 1, (Event *)FootOnEvent},
+  {Continuous, 0, EVENTS(ModWheelMinEvent), EVENTS(ModWheelMaxEvent)},
+  {Momentary,  1, EVENTS(DamperOnEvent), EVENTS(DamperOffEvent)},
+  {Latching,   2, EVENTS(FootOnEvent), EVENTS(FootOffEvent)},
 #endif
 };
 
