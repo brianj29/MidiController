@@ -121,40 +121,73 @@ void loop() {
 
       // Write the output state
       if (OutputState[i] != state) {
-        Event *eventList;
         int   eventListLen;
         
         OutputState[i] = state;
-        Serial.print(String("Pin ") + p->Num + ":" + val + "  ");
+        Serial.print(String("Pin ") + p->Num + ":" + val + ";" + state + "  ");
 
-        if (c->Type == Continuous || state < 512) {
-          eventList = c->Off;
-          eventListLen = c->OffLen;
-        }
-        else {
-          eventList = c->On;
-          eventListLen = c->OnLen;
-        }
+        if (c->Type == Continuous) {
+          Event *eventList1;
+          Event *eventList2;
+          
+          // Interpolate between c->Off and c->On values
+          eventList1 = c->On;
+          eventList2 = c->Off;
+          eventListLen = min(c->OffLen, c->OnLen);
+          for (int j = 0; j < eventListLen; j++) {
+            ControllerEvent *evt1;
+            ControllerEvent *evt2;
+            uint8_t value;
 
-        // Send all events in the event list
-        for (int j = 0; j < eventListLen; j++) {
-          ControllerEvent *evt;
-
-          Serial.println("Evt " + String(j) + "/" + eventListLen + ": " + eventList[j].Generic.Type);
-          switch (eventList[j].Generic.Type) {
-          case NoteEventType:
-            break;
-          case ControllerEventType:
-            evt = &eventList[j].Controller;
-            Serial.println(String("Ctl ") + evt->Channel + "/" + evt->Controller + ": " + evt->Value);
-            usbMIDI.sendControlChange(evt->Controller, evt->Value, evt->Channel);
-            MIDI.sendControlChange(evt->Controller, evt->Value, evt->Channel);
-            break;
-          case ProgramEventType:
-            break;
+            Serial.println("Evt " + String(j) + "/" + eventListLen + ": " + eventList1[j].Generic.Type);
+            switch (eventList1[j].Generic.Type) {
+            case NoteEventType:
+              break;
+            case ControllerEventType:
+              evt1 = &eventList1[j].Controller;
+              evt2 = &eventList2[j].Controller;
+              value = evt1->Value + (state * (evt2->Value - evt1->Value) / 1023);
+              Serial.println(String("Ctl ") + evt1->Channel + "/" + evt1->Controller + ": " + value);
+              usbMIDI.sendControlChange(evt1->Controller, value, evt1->Channel);
+              MIDI.sendControlChange(evt1->Controller, value, evt1->Channel);
+              break;
+            case ProgramEventType:
+              break;
+            }
           }
         }
-      }
+        else { // Latching or Momentary
+          Event *eventList;
+
+          if (state < 512) {
+            eventList = c->Off;
+            eventListLen = c->OffLen;
+          }
+          else {
+            eventList = c->On;
+            eventListLen = c->OnLen;
+          }
+
+          // Send all events in the event list
+          for (int j = 0; j < eventListLen; j++) {
+            ControllerEvent *evt;
+
+            Serial.println("Evt " + String(j) + "/" + eventListLen + ": " + eventList[j].Generic.Type);
+            switch (eventList[j].Generic.Type) {
+            case NoteEventType:
+              break;
+            case ControllerEventType:
+              evt = &eventList[j].Controller;
+              Serial.println(String("Ctl ") + evt->Channel + "/" + evt->Controller + ": " + evt->Value);
+              usbMIDI.sendControlChange(evt->Controller, evt->Value, evt->Channel);
+              MIDI.sendControlChange(evt->Controller, evt->Value, evt->Channel);
+              break;
+            case ProgramEventType:
+              break;
+            }
+          }
+        } // c->Type
+      } // OutputState[i]
     }
   }
 

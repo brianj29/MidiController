@@ -76,7 +76,7 @@ typedef struct _controller {
   int     Channel; // MIDI channel
   int     Controller;  // MIDI controller number
 #else
-  int     OnLen; // Number of Events in Off
+  int     OnLen; // Number of Events in On
   Event   *On;   // Events sent when switch turns "on"
   int     OffLen; // Number of Events in Off
   Event   *Off;  // Events sent when switch turns "off"
