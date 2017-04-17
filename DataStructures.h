@@ -1,5 +1,5 @@
 // Data structures for MIDI controller
-// by Brian J. Johnson  8/21/2016
+// by Brian J. Johnson  4/17/2017
 
 // Input pins
 
@@ -74,19 +74,8 @@ typedef union _event {
 } Event;
 
 typedef struct _controller {
-//  ControllerType  Type;
   int     Pin;  // Input Pins[] array index
-#if 0 // old format
-  int     Channel; // MIDI channel
-  int     Controller;  // MIDI controller number
-#elif 0 // 2nd format
-  int     OnLen; // Number of Events in On
-  Event   *On;   // Events sent when switch turns "on"
-  int     OffLen; // Number of Events in Off
-  Event   *Off;  // Events sent when switch turns "off"
-#else // new format
-  Event   Evt;
-#endif
+  Event   Evt;  // Output to generate when this pin changes state
 } Controller;
 
 
