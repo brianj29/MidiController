@@ -69,7 +69,7 @@ void loop() {
 
   // Poll the input pins
 
-  for (pinNum = 0; pinNum < sizeof(Pins) / sizeof(Pins[0]); pinNum++) {
+  for (pinNum = 0; pinNum < PIN_COUNT; pinNum++) {
     Pin *p = &Pins[pinNum];
     int val;     // Value read, 0-1023
     int state;   // Output state of the controller
@@ -132,9 +132,41 @@ void loop() {
   } // for (pinNum)
 
   // Convert pin state changes to output events
-    
+
+  for (unsigned i = 0; i < NumControllers; i++) {
+    Controller *c = &Controllers[i];
+    GenericEvent *genEvt = &c->Evt.Generic;
+    ControllerEvent *ctlEvt;
+    uint8_t value;
+
+    // Don't generate new events if pin state hasn't changed
+    pinNum = c->Pin;
+    if (NewState[pinNum] == PinState[pinNum]) {
+      continue;
+    }
+
+    Serial.print("  Evt " + String(i) + " t" + genEvt->Type + ": ");
+    switch (genEvt->Type) {
+    case NoteEventType:
+      break;
+
+    case ControllerEventType:
+      ctlEvt = &c->Evt.Controller;
+      value =
+        ctlEvt->OffValue +
+        (NewState[pinNum] * (ctlEvt->OnValue - ctlEvt->OffValue) / 1023);
+      Serial.println(String("Ctl ") + ctlEvt->Channel + "/" + ctlEvt->Controller + ": " + value);
+      usbMIDI.sendControlChange(ctlEvt->Controller, value, ctlEvt->Channel);
+      MIDI.sendControlChange(ctlEvt->Controller, value, ctlEvt->Channel);
+      break;
+
+    case ProgramEventType:
+      break;
+    }
+  }
+  
   // Save pin states for the next loop iteration
-  for (pinNum = 0; pinNum < sizeof(Pins) / sizeof(Pins[0]); pinNum++) {
+  for (pinNum = 0; pinNum < PIN_COUNT; pinNum++) {
     PinState[pinNum] = NewState[pinNum];
   }
 

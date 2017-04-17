@@ -32,8 +32,15 @@ typedef enum _eventType {
   NoteEventType       = 0,
   ControllerEventType = 1,
   ProgramEventType    = 2,
-  // FIXME:  add others?
+  // FIXME:  add others?  LED output, 
 } EventType;
+
+typedef struct _GenericEvent {
+  EventType Type;
+  uint8_t   Data1;
+  uint8_t   Data2;
+  uint8_t   Data3;
+} GenericEvent;
 
 typedef struct _NoteEvent {
   EventType Type;
@@ -60,6 +67,7 @@ typedef struct _ProgramEvent {
 } ProgramEvent;
 
 typedef union _event {
+  GenericEvent    Generic;
   NoteEvent       Note;
   ControllerEvent Controller;
   ProgramEvent    Program;

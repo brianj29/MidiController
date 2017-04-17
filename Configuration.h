@@ -47,6 +47,9 @@ ControllerEvent FootOffEvent[] = {
 
 #define EVENTS(_x) sizeof(_x) / sizeof(_x[0]), (Event *)(_x)
 
+#define CTL_EVENT(_ch, _n, _on, _off) \
+  {.Controller = {ControllerEventType, (_ch), (_n), (_on), (_off)}}
+
 Controller Controllers[] = {
 #if 0 // Old format
   // Type, Pin array idx, channel, controller
@@ -59,8 +62,10 @@ Controller Controllers[] = {
   {Momentary,  1, EVENTS(DamperOnEvent), EVENTS(DamperOffEvent)},
   {Latching,   2, EVENTS(FootOnEvent), EVENTS(FootOffEvent)},
 #else // New format
-  // Type, Pin array idx, Event
-  {1, {.Controller = {ControllerEventType, 1, 0x40 /*damper*/, 127, 0}}},
-  {1, {.Controller = {ControllerEventType, 1, 0x41 /*?*/, 125, 4}}}
+  // Pin array idx, Event
+  {0, CTL_EVENT(1, 0x1  /*modwheel*/, 127, 0)},
+  {1, CTL_EVENT(1, 0x40 /*damper*/,   127, 0)},
+  {1, CTL_EVENT(1, 0x41 /*?*/,        125, 4)},
+  {2, CTL_EVENT(1, 0x4  /*foot ctl*/, 127, 0)},
 #endif
 };
