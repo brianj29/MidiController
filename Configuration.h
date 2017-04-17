@@ -4,10 +4,10 @@
 // Input pins.  Edit these to reflect the physical board
 
 Pin Pins[] = {
-  // Type,      pin number   min   max
-  {Analog,        0,         133,  680},
-  {DigitalPullup, 12,        0,    1023},
-  {DigitalPullup, 11,        0,    1023}
+  // Type,      pin number   min   max   handling
+  {Analog,        0,         133,  680,  Continuous},
+  {DigitalPullup, 12,        0,    1023, Momentary},
+  {DigitalPullup, 11,        0,    1023, Latching}
 };
 
 
@@ -53,11 +53,14 @@ Controller Controllers[] = {
   {Continuous, 0, 1, 1 /* modwheel */},
   {Momentary,  1, 1, 0x40 /* damper */},
   {Latching,   2, 1, 0x4 /* foot cntlr */}
-#else
+#elif 0 // 2nd old format
   // Type, Pin array idx, "on" event count, "on" events, "off" event count, "off" events
   {Continuous, 0, EVENTS(ModWheelMinEvent), EVENTS(ModWheelMaxEvent)},
   {Momentary,  1, EVENTS(DamperOnEvent), EVENTS(DamperOffEvent)},
   {Latching,   2, EVENTS(FootOnEvent), EVENTS(FootOffEvent)},
+#else // New format
+  // Type, Pin array idx, Event
+  {1, {.Controller = {ControllerEventType, 1, 0x40 /*damper*/, 127, 0}}},
+  {1, {.Controller = {ControllerEventType, 1, 0x41 /*?*/, 125, 4}}}
 #endif
 };
-

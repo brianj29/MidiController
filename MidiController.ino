@@ -11,9 +11,10 @@
 // Global state
 
 #define PIN_COUNT (sizeof(Pins) / sizeof(Pins[0]))
-int    PinVal[PIN_COUNT];         // Last value read, indexed by pin
-Bounce PinBounce[PIN_COUNT];      // Debouncer state
-int    OutputState[] = {0, 0, 0}; // Last value written, idx by controller
+//int    PinVal[PIN_COUNT];         // Last value read, indexed by pin
+Bounce PinBounce[PIN_COUNT]; // Debouncer state
+int    PinState[PIN_COUNT];  // Previous value, indexed by pin
+int    NewState[PIN_COUNT];  // Current value, indexed by pin
 
 unsigned NumControllers = sizeof(Controllers) / sizeof(Controllers[0]);
 
@@ -42,7 +43,7 @@ void setup() {
       case Digital:
       case DigitalPullup:
         pinMode(p->Num, (p->Type == Digital) ? INPUT : INPUT_PULLUP);
-        PinVal[i] = 0;
+        //        PinVal[i] = 0;
         PinBounce[i] = Bounce();
         PinBounce[i].attach(p->Num);
         PinBounce[i].interval(5);
@@ -55,6 +56,7 @@ void setup() {
 }
 
 void loop() {
+  unsigned pinNum;
 
   // Consume any incoming MIDI data, to keep from hanging the host
 
@@ -65,6 +67,78 @@ void loop() {
     // Do nothing
   }
 
+  // Poll the input pins
+
+  for (pinNum = 0; pinNum < sizeof(Pins) / sizeof(Pins[0]); pinNum++) {
+    Pin *p = &Pins[pinNum];
+    int val;     // Value read, 0-1023
+    int state;   // Output state of the controller
+    int changed; // Whether or not a digital input changed state
+
+    // Poll the input pin, convert to range 0-1023
+
+    changed = 0;
+    switch (p->Type) {
+    case Analog:
+      val = analogRead(p->Num);
+      break;
+    case Digital:
+    case DigitalPullup:
+      changed = PinBounce[pinNum].update();
+      val = PinBounce[pinNum].read() * 1023;
+      break;
+    default:
+      val = 0;
+      break;
+    }
+
+    // Process/normalize the value to 0-1023 range
+
+    switch (p->Handling) {
+    case Momentary:
+      // Simply convert the input level to a pin state
+      state = 1023 - val; // Active low
+      break;
+    case Latching:
+      // Toggle state on deasserted->asserted transition (button release)
+      if (changed && val == 0) {
+        state = 1023 - PinState[pinNum];
+      }
+      else {
+        state = PinState[pinNum];
+      }
+      break;
+    case Continuous:
+      // Scale the input value to find the pin state
+      state = val;
+      if (state < p->Min) {
+        state = p->Min;
+      }
+      else if (state > p->Max) {
+        state = p->Max;
+      }
+      state = 1023 * (state - p->Min) / (p->Max - p->Min);
+      break;
+    default:
+      state = 0;
+      break;
+    }
+
+    // Save the pin state for the controller loop below
+    NewState[pinNum] = state;
+    if (NewState[pinNum] != PinState[pinNum]) {
+        Serial.println(String("Pin ") + p->Num + ":" + val + ";" + state);
+    }
+  } // for (pinNum)
+
+  // Convert pin state changes to output events
+    
+  // Save pin states for the next loop iteration
+  for (pinNum = 0; pinNum < sizeof(Pins) / sizeof(Pins[0]); pinNum++) {
+    PinState[pinNum] = NewState[pinNum];
+  }
+
+#if 0// bjj test hack
   // Process each controller
 
   for (unsigned i = 0; i < NumControllers; i++) {
@@ -93,7 +167,7 @@ void loop() {
     // Process changes in input pins
 
     if (PinVal[PinNum] != val) {
-      state = OutputState[i];
+      state = PinState[i];
       switch (c->Type) {
       case Momentary:
         // Simply convert the input level to an output state
@@ -120,10 +194,10 @@ void loop() {
       PinVal[PinNum] = val; // Save for next time through the loop
 
       // Write the output state
-      if (OutputState[i] != state) {
+      if (PinState[i] != state) {
         int   eventListLen;
         
-        OutputState[i] = state;
+        PinState[i] = state;
         Serial.print(String("Pin ") + p->Num + ":" + val + ";" + state + "  ");
 
         if (c->Type == Continuous) {
@@ -187,9 +261,10 @@ void loop() {
             }
           }
         } // c->Type
-      } // OutputState[i]
+      } // PinState[i]
     }
   }
+#endif // bjj
 
   // Send any queued USB MIDI data
   usbMIDI.send_now();
