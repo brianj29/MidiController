@@ -6,7 +6,8 @@
 typedef enum _pinType {
   Analog,
   Digital,
-  DigitalPullup
+  DigitalPullup,
+  AnalogOut
 } PinType;
 
 typedef enum _pinHandling {
@@ -32,7 +33,7 @@ typedef enum _eventType {
   NoteEventType       = 0,
   ControllerEventType = 1,
   ProgramEventType    = 2,
-  // FIXME:  add others?  LED output, 
+  OutEventType        = 3,
 } EventType;
 
 typedef struct _GenericEvent {
@@ -66,11 +67,20 @@ typedef struct _ProgramEvent {
   uint8_t   unused2;
 } ProgramEvent;
 
+typedef struct _OutEvent {
+  EventType Type;
+  uint8_t   OutPin;
+  uint8_t   OnValue;
+  uint8_t   OffValue;
+  uint8_t   unused1;
+} OutEvent;
+
 typedef union _event {
   GenericEvent    Generic;
   NoteEvent       Note;
   ControllerEvent Controller;
   ProgramEvent    Program;
+  OutEvent        Out;
 } Event;
 
 typedef struct _controller {

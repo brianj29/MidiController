@@ -31,12 +31,13 @@ void setup() {
   MIDI.begin(MIDI_CHANNEL_OMNI);
   MIDI.turnThruOff();
   
-  // Configure the input pins
+  // Configure the i/o pins
 
   for (unsigned i = 0; i < PIN_COUNT; i++) {
     Pin *p = &Pins[i];
     switch (p->Type) {
       case Analog:
+      case AnalogOut:
         // No setup needed
         break;
       case Digital:
@@ -138,6 +139,7 @@ void loop() {
     ControllerEvent *ctlEvt;
     NoteEvent       *noteEvt;
     ProgramEvent    *pgmEvt;
+    OutEvent        *outEvt;
     uint8_t         value;
 
     // Don't generate new events if pin state hasn't changed
@@ -185,6 +187,16 @@ void loop() {
       else {
         Serial.println("<none>");
       }
+      break;
+
+    case OutEventType:
+      // Scale the LED/PWM output between OffValue and OnValue
+      outEvt = &c->Evt.Out;
+      value =
+        outEvt->OffValue +
+        (NewState[pinNum] * (outEvt->OnValue - outEvt->OffValue) / 1023);
+      Serial.println(String("Out ") + outEvt->OutPin + ": " + value);
+      analogWrite(Pins[outEvt->OutPin].Num, value);
       break;
     }
   }
