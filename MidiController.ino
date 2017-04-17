@@ -133,10 +133,12 @@ void loop() {
   // Convert pin state changes to output events
 
   for (unsigned i = 0; i < NumControllers; i++) {
-    Controller *c = &Controllers[i];
-    GenericEvent *genEvt = &c->Evt.Generic;
+    Controller      *c = &Controllers[i];
+    GenericEvent    *genEvt = &c->Evt.Generic;
     ControllerEvent *ctlEvt;
-    uint8_t value;
+    NoteEvent       *noteEvt;
+    ProgramEvent    *pgmEvt;
+    uint8_t         value;
 
     // Don't generate new events if pin state hasn't changed
     pinNum = c->Pin;
@@ -147,9 +149,22 @@ void loop() {
     Serial.print("  Evt " + String(i) + " t" + genEvt->Type + ": ");
     switch (genEvt->Type) {
     case NoteEventType:
+      // Send note on for off->on transition, note off for on->off transition
+      noteEvt = &c->Evt.Note;
+      if (PinState[pinNum] < 512 && NewState[pinNum] > 512) {
+        Serial.println(String("On  ") + noteEvt->Channel + "/" + noteEvt->Note + ": " + noteEvt->OnVelocity);
+        usbMIDI.sendNoteOn(noteEvt->Note, noteEvt->OnVelocity, noteEvt->Channel);
+        MIDI.sendNoteOn(noteEvt->Note, noteEvt->OnVelocity, noteEvt->Channel);
+      }
+      else {
+        Serial.println(String("Off ") + noteEvt->Channel + "/" + noteEvt->Note + ": " + noteEvt->OffVelocity);
+        usbMIDI.sendNoteOn(noteEvt->Note, noteEvt->OffVelocity, noteEvt->Channel);
+        MIDI.sendNoteOn(noteEvt->Note, noteEvt->OffVelocity, noteEvt->Channel);
+      }
       break;
 
     case ControllerEventType:
+      // Scale controller value between OffValue and OnValue
       ctlEvt = &c->Evt.Controller;
       value =
         ctlEvt->OffValue +
@@ -160,6 +175,16 @@ void loop() {
       break;
 
     case ProgramEventType:
+      // Send program change on button off->on transition
+      if (PinState[pinNum] < 512 && NewState[pinNum] > 512) {
+        pgmEvt = &c->Evt.Program;
+        Serial.println(String("Pgm ") + pgmEvt->Channel + "/" + pgmEvt->Program);
+        usbMIDI.sendProgramChange(pgmEvt->Program, pgmEvt->Channel);
+        MIDI.sendProgramChange(pgmEvt->Program, pgmEvt->Channel);
+      }
+      else {
+        Serial.println("<none>");
+      }
       break;
     }
   }
