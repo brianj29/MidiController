@@ -21,7 +21,6 @@ typedef struct _pin {
   int         Num;  // Hardware pin number
   int         Min;  // Min/max values, for calibration
   int         Max;
-  PinHandling Handling;
 } Pin;
 
 extern Pin Pins[];
@@ -84,8 +83,9 @@ typedef union _event {
 } Event;
 
 typedef struct _controller {
-  int     Pin;  // Input Pins[] array index
-  Event   Evt;  // Output to generate when this pin changes state
+  int         Pin;  // Input Pins[] array index
+  PinHandling Handling;
+  Event       Evt;  // Output to generate when this pin changes state
 } Controller;
 
 

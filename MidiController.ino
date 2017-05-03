@@ -16,10 +16,14 @@ int    PinState[PIN_COUNT];  // Previous value, indexed by pin
 int    NewState[PIN_COUNT];  // Current value, indexed by pin
 
 unsigned NumControllers = sizeof(Controllers) / sizeof(Controllers[0]);
+ // Last value calculated for controller
+uint8_t  LastValue[sizeof(Controllers) / sizeof(Controllers[0])];
 
 void setup() {
   Serial.begin(38400);  // For debugging
-  //while (!Serial) { }   // Wait for USB serial to connect
+#if 0
+  while (!Serial) { }   // Wait for USB serial to connect
+#endif
 
   // Turn on the LED, so we can see the board is on
 
@@ -53,6 +57,12 @@ void setup() {
     }
     PinState[i] = 0;
   }
+
+  // Initialize state
+
+  for (unsigned i = 0; i < NumControllers; i++) {
+    LastValue[i] = 0;
+  }
 }
 
 void loop() {
@@ -72,44 +82,14 @@ void loop() {
   for (pinNum = 0; pinNum < PIN_COUNT; pinNum++) {
     Pin *p = &Pins[pinNum];
     int val;     // Value read, 0-1023
-    int state;   // Output state of the controller
-    int changed; // Whether or not a digital input changed state
+    int state;   // Output state of the pin
 
     // Poll the input pin, convert to range 0-1023
 
-    changed = 0;
     switch (p->Type) {
     case Analog:
-      val = analogRead(p->Num);
-      break;
-    case Digital:
-    case DigitalPullup:
-      changed = PinBounce[pinNum].update();
-      val = PinBounce[pinNum].read() * 1023;
-      break;
-    default:
-      val = 0;
-      break;
-    }
-
-    // Process/normalize the value to 0-1023 range
-
-    switch (p->Handling) {
-    case Momentary:
-      // Simply convert the input level to a pin state
-      state = 1023 - val; // Active low
-      break;
-    case Latching:
-      // Toggle state on deasserted->asserted transition (button release)
-      if (changed && val == 0) {
-        state = 1023 - PinState[pinNum];
-      }
-      else {
-        state = PinState[pinNum];
-      }
-      break;
-    case Continuous:
       // Scale the input value to find the pin state
+      val = analogRead(p->Num);
       state = val;
       if (state < p->Min) {
         state = p->Min;
@@ -119,7 +99,15 @@ void loop() {
       }
       state = 1023 * (state - p->Min) / (p->Max - p->Min);
       break;
+    case Digital:
+    case DigitalPullup:
+      // Simply convert the input level to a pin state
+      PinBounce[pinNum].update();
+      val = PinBounce[pinNum].read() * 1023;
+      state = 1023 - val; // Active low
+      break;
     default:
+      val = 0;
       state = 0;
       break;
     }
@@ -140,20 +128,59 @@ void loop() {
     NoteEvent       *noteEvt;
     ProgramEvent    *pgmEvt;
     OutEvent        *outEvt;
+    int             changed;
+    int             state;
     uint8_t         value;
 
-    // Don't generate new events if pin state hasn't changed
+    // Detect changes, for use in the event type handlers below
+
     pinNum = c->Pin;
-    if (NewState[pinNum] == PinState[pinNum]) {
+    switch (c->Handling) {
+    case Continuous:
+    case Momentary:
+      state   = NewState[pinNum];
+      changed = (NewState[pinNum] != PinState[pinNum]);
+      break;
+
+    case Latching:
+      // Fetch current latch state based on last value sent
+      if (LastValue[i] < 64) {
+        state = 0;
+      }
+      else {
+        state = 1023;
+      }
+
+      // Toggle state on button press
+      if (PinState[pinNum] < 512 && NewState[pinNum] >= 512) {
+        state = 1023 - state;
+        changed = 1;
+      }
+      else {
+        changed = 0;
+      }
+      break;
+
+    default:
+      state = 0;
+      changed = 0;
+      break;
+    }
+
+    // Don't generate any events if pin state hasn't changed
+
+    if (changed == 0) {
       continue;
     }
 
-    Serial.print("  Evt " + String(i) + " t" + genEvt->Type + ": ");
+    // Process the Controllers[] array entry
+
+    //Serial.println("  Evt " + String(i) + " t" + genEvt->Type + ": ");
     switch (genEvt->Type) {
     case NoteEventType:
       // Send note on for off->on transition, note off for on->off transition
       noteEvt = &c->Evt.Note;
-      if (PinState[pinNum] < 512 && NewState[pinNum] > 512) {
+      if (state > 512) {
         Serial.println(String("On  ") + noteEvt->Channel + "/" + noteEvt->Note + ": " + noteEvt->OnVelocity);
         usbMIDI.sendNoteOn(noteEvt->Note, noteEvt->OnVelocity, noteEvt->Channel);
         MIDI.sendNoteOn(noteEvt->Note, noteEvt->OnVelocity, noteEvt->Channel);
@@ -163,6 +190,7 @@ void loop() {
         usbMIDI.sendNoteOn(noteEvt->Note, noteEvt->OffVelocity, noteEvt->Channel);
         MIDI.sendNoteOn(noteEvt->Note, noteEvt->OffVelocity, noteEvt->Channel);
       }
+      value = state / 8; // Scale to 0-127 range
       break;
 
     case ControllerEventType:
@@ -170,15 +198,17 @@ void loop() {
       ctlEvt = &c->Evt.Controller;
       value =
         ctlEvt->OffValue +
-        (NewState[pinNum] * (ctlEvt->OnValue - ctlEvt->OffValue) / 1023);
-      Serial.println(String("Ctl ") + ctlEvt->Channel + "/" + ctlEvt->Controller + ": " + value);
-      usbMIDI.sendControlChange(ctlEvt->Controller, value, ctlEvt->Channel);
-      MIDI.sendControlChange(ctlEvt->Controller, value, ctlEvt->Channel);
+        (state * (ctlEvt->OnValue - ctlEvt->OffValue) / 1023);
+      if (value != LastValue[i]) {
+        Serial.println(String("Ctl ") + ctlEvt->Channel + "/" + ctlEvt->Controller + ": " + value);
+        usbMIDI.sendControlChange(ctlEvt->Controller, value, ctlEvt->Channel);
+        MIDI.sendControlChange(ctlEvt->Controller, value, ctlEvt->Channel);
+      }
       break;
 
     case ProgramEventType:
       // Send program change on button off->on transition
-      if (PinState[pinNum] < 512 && NewState[pinNum] > 512) {
+      if (state > 512) {
         pgmEvt = &c->Evt.Program;
         Serial.println(String("Pgm ") + pgmEvt->Channel + "/" + pgmEvt->Program);
         usbMIDI.sendProgramChange(pgmEvt->Program, pgmEvt->Channel);
@@ -187,6 +217,7 @@ void loop() {
       else {
         Serial.println("<none>");
       }
+      value = state / 8; // Scale to 0-127 range
       break;
 
     case OutEventType:
@@ -194,11 +225,21 @@ void loop() {
       outEvt = &c->Evt.Out;
       value =
         outEvt->OffValue +
-        (NewState[pinNum] * (outEvt->OnValue - outEvt->OffValue) / 1023);
-      Serial.println(String("Out ") + outEvt->OutPin + ": " + value);
-      analogWrite(Pins[outEvt->OutPin].Num, value);
+        (state * (outEvt->OnValue - outEvt->OffValue) / 1023);
+      if (value != LastValue[i]) {
+        Serial.println(String("Out ") + outEvt->OutPin + ": " + value);
+        analogWrite(Pins[outEvt->OutPin].Num, value);
+      }
+      break;
+
+    default:
+      value = 0;
       break;
     }
+
+    // Remember the last value generated
+
+    LastValue[i] = value;
   }
   
   // Save pin states for the next loop iteration
