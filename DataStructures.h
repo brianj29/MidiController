@@ -82,10 +82,10 @@ typedef union _event {
   OutEvent        Out;
 } Event;
 
-typedef struct _controller {
+typedef struct _eventMap {
   int         Pin;  // Input Pins[] array index
   PinHandling Handling;
   Event       Evt;  // Output to generate when this pin changes state
-} Controller;
+} EventMap;
 
 

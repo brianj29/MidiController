@@ -26,7 +26,7 @@ Pin Pins[] = {
 #define OUTP_EVENT(_p, _on, _off) \
   {.Out = {OutEventType, (_p), (_on), (_off)}}
 
-Controller Controllers[] = {
+EventMap EventList[] = {
   // Pin array idx, Handling, Event macro
   {0, Continuous, CNTL_EVENT(1, 0x1  /*modwheel*/, 127, 0)},
   {1, Momentary,  CNTL_EVENT(1, 0x40 /*damper*/,   127, 0)},

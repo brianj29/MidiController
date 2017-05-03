@@ -15,9 +15,9 @@ Bounce PinBounce[PIN_COUNT]; // Debouncer state
 int    PinState[PIN_COUNT];  // Previous value, indexed by pin
 int    NewState[PIN_COUNT];  // Current value, indexed by pin
 
-unsigned NumControllers = sizeof(Controllers) / sizeof(Controllers[0]);
+unsigned NumEvents = sizeof(EventList) / sizeof(EventList[0]);
  // Last value calculated for controller
-uint8_t  LastValue[sizeof(Controllers) / sizeof(Controllers[0])];
+uint8_t  LastValue[sizeof(EventList) / sizeof(EventList[0])];
 
 void setup() {
   Serial.begin(38400);  // For debugging
@@ -60,7 +60,7 @@ void setup() {
 
   // Initialize state
 
-  for (unsigned i = 0; i < NumControllers; i++) {
+  for (unsigned i = 0; i < NumEvents; i++) {
     LastValue[i] = 0;
   }
 }
@@ -121,21 +121,17 @@ void loop() {
 
   // Convert pin state changes to output events
 
-  for (unsigned i = 0; i < NumControllers; i++) {
-    Controller      *c = &Controllers[i];
-    GenericEvent    *genEvt = &c->Evt.Generic;
-    ControllerEvent *ctlEvt;
-    NoteEvent       *noteEvt;
-    ProgramEvent    *pgmEvt;
-    OutEvent        *outEvt;
+  for (unsigned i = 0; i < NumEvents; i++) {
+    EventMap        *m = &EventList[i];
+    GenericEvent    *genEvt = &m->Evt.Generic;
     int             changed;
     int             state;
     uint8_t         value;
 
     // Detect changes, for use in the event type handlers below
 
-    pinNum = c->Pin;
-    switch (c->Handling) {
+    pinNum = m->Pin;
+    switch (m->Handling) {
     case Continuous:
     case Momentary:
       state   = NewState[pinNum];
@@ -173,13 +169,14 @@ void loop() {
       continue;
     }
 
-    // Process the Controllers[] array entry
+    // Process the output event
 
     //Serial.println("  Evt " + String(i) + " t" + genEvt->Type + ": ");
     switch (genEvt->Type) {
     case NoteEventType:
       // Send note on for off->on transition, note off for on->off transition
-      noteEvt = &c->Evt.Note;
+      NoteEvent *noteEvt;
+      noteEvt = &m->Evt.Note;
       if (state > 512) {
         Serial.println(String("On  ") + noteEvt->Channel + "/" + noteEvt->Note + ": " + noteEvt->OnVelocity);
         usbMIDI.sendNoteOn(noteEvt->Note, noteEvt->OnVelocity, noteEvt->Channel);
@@ -195,7 +192,8 @@ void loop() {
 
     case ControllerEventType:
       // Scale controller value between OffValue and OnValue
-      ctlEvt = &c->Evt.Controller;
+      ControllerEvent *ctlEvt;
+      ctlEvt = &m->Evt.Controller;
       value =
         ctlEvt->OffValue +
         (state * (ctlEvt->OnValue - ctlEvt->OffValue) / 1023);
@@ -208,8 +206,9 @@ void loop() {
 
     case ProgramEventType:
       // Send program change on button off->on transition
+      ProgramEvent *pgmEvt;
       if (state > 512) {
-        pgmEvt = &c->Evt.Program;
+        pgmEvt = &m->Evt.Program;
         Serial.println(String("Pgm ") + pgmEvt->Channel + "/" + pgmEvt->Program);
         usbMIDI.sendProgramChange(pgmEvt->Program, pgmEvt->Channel);
         MIDI.sendProgramChange(pgmEvt->Program, pgmEvt->Channel);
@@ -222,7 +221,8 @@ void loop() {
 
     case OutEventType:
       // Scale the LED/PWM output between OffValue and OnValue
-      outEvt = &c->Evt.Out;
+      OutEvent *outEvt;
+      outEvt = &m->Evt.Out;
       value =
         outEvt->OffValue +
         (state * (outEvt->OnValue - outEvt->OffValue) / 1023);
