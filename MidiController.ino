@@ -250,6 +250,7 @@ void loop() {
 
   // Send any queued USB MIDI data
   usbMIDI.send_now();
+  USE_SERIAL_PORT.flush(); // Serial port underlying MIDI library
 
-  delay(100); // FIXME:  use rate-limiting on MIDI interface
+  delay(1); // Don't send too quickly.  FIXME do something more?
 }
