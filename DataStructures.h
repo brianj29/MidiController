@@ -1,5 +1,5 @@
 // Data structures for MIDI controller
-// by Brian J. Johnson  4/17/2017
+// by Brian J. Johnson  5/21/2017
 
 // Input pins
 
@@ -22,6 +22,9 @@ typedef struct _pin {
   int         Min;  // Min/max values, for calibration
   int         Max;
 } Pin;
+
+// Fake pin number to trigger at initialization time
+#define INIT_PIN 255
 
 extern Pin Pins[];
 

@@ -1,5 +1,5 @@
 // Configuration for MIDI controller
-// by Brian J. Johnson  4/17/2017
+// by Brian J. Johnson  5/21/2017
 
 // Input pins.  Edit these to reflect the physical board
 
@@ -28,6 +28,7 @@ Pin Pins[] = {
 
 EventMap EventList[] = {
   // Pin array idx, Handling, Event macro
+  {INIT_PIN, Momentary, CNTL_EVENT(1, 0x1  /*modwheel*/, 0, 0)}, // Mod=0
   {0, Continuous, CNTL_EVENT(1, 0x1  /*modwheel*/, 127, 0)},
   {1, Momentary,  CNTL_EVENT(1, 0x40 /*damper*/,   127, 0)},
   {1, Momentary,  NOTE_EVENT(1, 0x20 /*a note*/,   96,  0)},

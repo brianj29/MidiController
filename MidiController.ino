@@ -3,7 +3,7 @@
 #include <Bounce2.h>
 
 // Midi controller
-// by Brian J. Johnson  4/17/2017
+// by Brian J. Johnson  5/21/2017
 
 #include "DataStructures.h"
 #include "Configuration.h"
@@ -18,6 +18,83 @@ int    NewState[PIN_COUNT];  // Current value, indexed by pin
 unsigned NumEvents = sizeof(EventList) / sizeof(EventList[0]);
  // Last value calculated for controller
 uint8_t  LastValue[sizeof(EventList) / sizeof(EventList[0])];
+
+
+// Generate an output event, based on an input pin state and
+// the previous value generated
+
+uint8_t GenerateEvent(Event *Evt, int state, uint8_t lastValue) {
+  uint8_t value;
+
+  //Serial.println("  Evt " + String(i) + " t" + genEvt->Type + ": ");
+  switch (Evt->Generic.Type) {
+  case NoteEventType:
+    // Send note on for off->on transition, note off for on->off transition
+    NoteEvent *noteEvt;
+    noteEvt = &Evt->Note;
+    if (state > 512) {
+      Serial.println(String("On  ") + noteEvt->Channel + "/" + noteEvt->Note + ": " + noteEvt->OnVelocity);
+      usbMIDI.sendNoteOn(noteEvt->Note, noteEvt->OnVelocity, noteEvt->Channel);
+      MIDI.sendNoteOn(noteEvt->Note, noteEvt->OnVelocity, noteEvt->Channel);
+    }
+    else {
+      Serial.println(String("Off ") + noteEvt->Channel + "/" + noteEvt->Note + ": " + noteEvt->OffVelocity);
+      usbMIDI.sendNoteOn(noteEvt->Note, noteEvt->OffVelocity, noteEvt->Channel);
+      MIDI.sendNoteOn(noteEvt->Note, noteEvt->OffVelocity, noteEvt->Channel);
+    }
+    value = state / 8; // Scale to 0-127 range
+    break;
+
+  case ControllerEventType:
+    // Scale controller value between OffValue and OnValue
+    ControllerEvent *ctlEvt;
+    ctlEvt = &Evt->Controller;
+    value =
+      ctlEvt->OffValue +
+      (state * (ctlEvt->OnValue - ctlEvt->OffValue) / 1023);
+    if (value != lastValue) {
+      Serial.println(String("Ctl ") + ctlEvt->Channel + "/" + ctlEvt->Controller + ": " + value);
+      usbMIDI.sendControlChange(ctlEvt->Controller, value, ctlEvt->Channel);
+      MIDI.sendControlChange(ctlEvt->Controller, value, ctlEvt->Channel);
+    }
+    break;
+
+  case ProgramEventType:
+    // Send program change on button off->on transition
+    ProgramEvent *pgmEvt;
+    if (state > 512) {
+      pgmEvt = &Evt->Program;
+      Serial.println(String("Pgm ") + pgmEvt->Channel + "/" + pgmEvt->Program);
+      usbMIDI.sendProgramChange(pgmEvt->Program, pgmEvt->Channel);
+      MIDI.sendProgramChange(pgmEvt->Program, pgmEvt->Channel);
+    }
+    else {
+      Serial.println("<none>");
+    }
+    value = state / 8; // Scale to 0-127 range
+    break;
+
+  case OutEventType:
+    // Scale the LED/PWM output between OffValue and OnValue
+    OutEvent *outEvt;
+    outEvt = &Evt->Out;
+    value =
+      outEvt->OffValue +
+      (state * (outEvt->OnValue - outEvt->OffValue) / 1023);
+    if (value != lastValue) {
+      Serial.println(String("Out ") + outEvt->OutPin + ": " + value);
+      analogWrite(Pins[outEvt->OutPin].Num, value);
+    }
+    break;
+
+  default:
+    value = 0;
+    break;
+  }
+
+  return value;
+}
+
 
 void setup() {
   Serial.begin(38400);  // For debugging
@@ -58,10 +135,19 @@ void setup() {
     PinState[i] = 0;
   }
 
-  // Initialize state
+  // Send any initialization events, and initialize LastValue[]
 
   for (unsigned i = 0; i < NumEvents; i++) {
-    LastValue[i] = 0;
+    EventMap *m = &EventList[i];
+
+    if (m->Pin == INIT_PIN) {
+      // Call GenerteEvent with state=1023 (the max), and an impossible
+      // lastValue which guarantees new data will be sent
+      LastValue[i] = GenerateEvent(&m->Evt, 1023, 0xff);
+    }
+    else {
+      LastValue[i] = 0;
+    }
   }
 }
 
@@ -123,7 +209,6 @@ void loop() {
 
   for (unsigned i = 0; i < NumEvents; i++) {
     EventMap        *m = &EventList[i];
-    GenericEvent    *genEvt = &m->Evt.Generic;
     int             changed;
     int             state;
     uint8_t         value;
@@ -131,6 +216,11 @@ void loop() {
     // Detect changes, for use in the event type handlers below
 
     pinNum = m->Pin;
+    if (pinNum == INIT_PIN) {
+      // Only process at initialization time
+      continue;
+    }
+
     switch (m->Handling) {
     case Continuous:
     case Momentary:
@@ -169,73 +259,9 @@ void loop() {
       continue;
     }
 
-    // Process the output event
+    // Generate the output event
 
-    //Serial.println("  Evt " + String(i) + " t" + genEvt->Type + ": ");
-    switch (genEvt->Type) {
-    case NoteEventType:
-      // Send note on for off->on transition, note off for on->off transition
-      NoteEvent *noteEvt;
-      noteEvt = &m->Evt.Note;
-      if (state > 512) {
-        Serial.println(String("On  ") + noteEvt->Channel + "/" + noteEvt->Note + ": " + noteEvt->OnVelocity);
-        usbMIDI.sendNoteOn(noteEvt->Note, noteEvt->OnVelocity, noteEvt->Channel);
-        MIDI.sendNoteOn(noteEvt->Note, noteEvt->OnVelocity, noteEvt->Channel);
-      }
-      else {
-        Serial.println(String("Off ") + noteEvt->Channel + "/" + noteEvt->Note + ": " + noteEvt->OffVelocity);
-        usbMIDI.sendNoteOn(noteEvt->Note, noteEvt->OffVelocity, noteEvt->Channel);
-        MIDI.sendNoteOn(noteEvt->Note, noteEvt->OffVelocity, noteEvt->Channel);
-      }
-      value = state / 8; // Scale to 0-127 range
-      break;
-
-    case ControllerEventType:
-      // Scale controller value between OffValue and OnValue
-      ControllerEvent *ctlEvt;
-      ctlEvt = &m->Evt.Controller;
-      value =
-        ctlEvt->OffValue +
-        (state * (ctlEvt->OnValue - ctlEvt->OffValue) / 1023);
-      if (value != LastValue[i]) {
-        Serial.println(String("Ctl ") + ctlEvt->Channel + "/" + ctlEvt->Controller + ": " + value);
-        usbMIDI.sendControlChange(ctlEvt->Controller, value, ctlEvt->Channel);
-        MIDI.sendControlChange(ctlEvt->Controller, value, ctlEvt->Channel);
-      }
-      break;
-
-    case ProgramEventType:
-      // Send program change on button off->on transition
-      ProgramEvent *pgmEvt;
-      if (state > 512) {
-        pgmEvt = &m->Evt.Program;
-        Serial.println(String("Pgm ") + pgmEvt->Channel + "/" + pgmEvt->Program);
-        usbMIDI.sendProgramChange(pgmEvt->Program, pgmEvt->Channel);
-        MIDI.sendProgramChange(pgmEvt->Program, pgmEvt->Channel);
-      }
-      else {
-        Serial.println("<none>");
-      }
-      value = state / 8; // Scale to 0-127 range
-      break;
-
-    case OutEventType:
-      // Scale the LED/PWM output between OffValue and OnValue
-      OutEvent *outEvt;
-      outEvt = &m->Evt.Out;
-      value =
-        outEvt->OffValue +
-        (state * (outEvt->OnValue - outEvt->OffValue) / 1023);
-      if (value != LastValue[i]) {
-        Serial.println(String("Out ") + outEvt->OutPin + ": " + value);
-        analogWrite(Pins[outEvt->OutPin].Num, value);
-      }
-      break;
-
-    default:
-      value = 0;
-      break;
-    }
+    value = GenerateEvent(&m->Evt, state, LastValue[i]);
 
     // Remember the last value generated
 
