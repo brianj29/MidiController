@@ -26,6 +26,9 @@ typedef struct _pin {
 // Fake pin number to trigger at initialization time
 #define INIT_PIN 255
 
+// Fake pin number to indicate the start of a program
+#define PROGRAM_PIN 254
+
 extern Pin Pins[];
 
 

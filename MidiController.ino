@@ -15,9 +15,9 @@ Bounce PinBounce[PIN_COUNT]; // Debouncer state
 int    PinState[PIN_COUNT];  // Previous value, indexed by pin
 int    NewState[PIN_COUNT];  // Current value, indexed by pin
 
-unsigned NumEvents = sizeof(EventList) / sizeof(EventList[0]);
- // Last value calculated for controller
-uint8_t  LastValue[sizeof(EventList) / sizeof(EventList[0])];
+EventMap *EventList; // List of events to handle
+unsigned NumEvents;  // Number of entries in EventList
+uint8_t  *LastValue; // Last value calculated for controller
 
 
 // Generate an output event, based on an input pin state and
@@ -96,6 +96,73 @@ uint8_t GenerateEvent(Event *Evt, int state, uint8_t lastValue) {
 }
 
 
+void FindProgram (byte channelNum, byte programNum) {
+  unsigned i;
+  unsigned count;
+
+  Serial.println(String("->Pgm ") + channelNum + "." + programNum);
+
+  // Find the requested channel and program number in the list,
+  // or default to the first entry
+
+  for (i = 0; i < sizeof(DefaultEventList) / sizeof(DefaultEventList[0]); i++) {
+    ProgramEvent *pgm;
+
+    if (DefaultEventList[i].Pin != PROGRAM_PIN) {
+      continue;
+    }
+
+    pgm = &DefaultEventList[i].Evt.Program;
+    if (pgm->Type != ProgramEventType) {
+      Serial.println("Bad program entry at index " + i);
+      continue;
+    }
+
+    if (pgm->Channel == channelNum && pgm->Program == programNum) {
+      break; // Found it!
+    }
+  }
+
+  if (i >= sizeof(DefaultEventList) / sizeof(DefaultEventList[0])) {
+    // Not found, use the first table entry as the default
+    Serial.println(" (not found)");
+    i = 0;
+  }
+
+  // Count the entries
+
+  i++; // Skip the PROGRAM_PIN element
+  for (count = 0; (i + count) < sizeof(DefaultEventList) / sizeof(DefaultEventList[0]); count++) {
+    if (DefaultEventList[i + count].Pin == PROGRAM_PIN) {
+      break;
+    }
+  }
+
+  // Initialize EventList, NumEvents, LastValue
+  NumEvents = count;
+  EventList = (EventMap *)realloc (EventList, NumEvents * sizeof (*EventList));
+  memcpy(EventList, &DefaultEventList[i], NumEvents * sizeof (*EventList));
+
+  LastValue = (uint8_t *)realloc (LastValue, NumEvents * sizeof (*LastValue));
+  memset(LastValue, 0, NumEvents * sizeof (*LastValue));
+
+  // Send any initialization events, and initialize LastValue[]
+
+  for (unsigned i = 0; i < NumEvents; i++) {
+    EventMap *m = &EventList[i];
+
+    if (m->Pin == INIT_PIN) {
+      // Call GenerteEvent with state=1023 (the max), and an impossible
+      // lastValue which guarantees new data will be sent
+      LastValue[i] = GenerateEvent(&m->Evt, 1023, 0xff);
+    }
+    else {
+      LastValue[i] = 0;
+    }
+  }
+}
+
+
 void setup() {
   Serial.begin(38400);  // For debugging
 #if 0
@@ -135,29 +202,27 @@ void setup() {
     PinState[i] = 0;
   }
 
-  // Send any initialization events, and initialize LastValue[]
+  // Initialize to first program in table
 
-  for (unsigned i = 0; i < NumEvents; i++) {
-    EventMap *m = &EventList[i];
-
-    if (m->Pin == INIT_PIN) {
-      // Call GenerteEvent with state=1023 (the max), and an impossible
-      // lastValue which guarantees new data will be sent
-      LastValue[i] = GenerateEvent(&m->Evt, 1023, 0xff);
-    }
-    else {
-      LastValue[i] = 0;
-    }
-  }
+  FindProgram (DefaultEventList[0].Evt.Program.Channel,
+               DefaultEventList[0].Evt.Program.Program);
 }
 
 void loop() {
   unsigned pinNum;
 
-  // Consume any incoming MIDI data, to keep from hanging the host
+  // See if we have received a program change.  Discard all other incoming
+  // MIDI data, to keep from hanging the host.
 
   while (usbMIDI.read()) {
-    // Do nothing
+    byte msgType = usbMIDI.getType();
+    if (msgType == 4 /*ProgramChange*/) {
+      FindProgram(usbMIDI.getChannel(), usbMIDI.getData1());  // Or just use callbacks?
+    }
+    else {
+      Serial.println(String("->Msg ") + msgType + " " +
+                     usbMIDI.getData1() + " " + usbMIDI.getData2());
+    }
   }
   while (MIDI.read()) {
     // Do nothing
@@ -216,8 +281,8 @@ void loop() {
     // Detect changes, for use in the event type handlers below
 
     pinNum = m->Pin;
-    if (pinNum == INIT_PIN) {
-      // Only process at initialization time
+    if (pinNum == INIT_PIN || pinNum == PROGRAM_PIN) {
+      // Skip special pin IDs
       continue;
     }
 
