@@ -220,8 +220,10 @@ void loop() {
       FindProgram(usbMIDI.getChannel(), usbMIDI.getData1());  // Or just use callbacks?
     }
     else {
+#if 0
       Serial.println(String("->Msg ") + msgType + " " +
                      usbMIDI.getData1() + " " + usbMIDI.getData2());
+#endif
     }
   }
   while (MIDI.read()) {
