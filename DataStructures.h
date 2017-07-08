@@ -7,7 +7,8 @@ typedef enum _pinType {
   Analog,
   Digital,
   DigitalPullup,
-  AnalogOut
+  AnalogOut,
+  DigitalOut
 } PinType;
 
 typedef enum _pinHandling {

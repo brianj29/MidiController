@@ -83,7 +83,16 @@ uint8_t GenerateEvent(Event *Evt, int state, uint8_t lastValue) {
       (state * (outEvt->OnValue - outEvt->OffValue) / 1023);
     if (value != lastValue) {
       Serial.println(String("Out ") + outEvt->OutPin + ": " + value);
-      analogWrite(Pins[outEvt->OutPin].Num, value);
+      switch (Pins[outEvt->OutPin].Type) {
+      case AnalogOut:
+        analogWrite(Pins[outEvt->OutPin].Num, value);
+        break;
+      case DigitalOut:
+        digitalWrite(Pins[outEvt->OutPin].Num, ((value < 128) ? LOW : HIGH));
+        break;
+      default:
+        break;
+      }
     }
     break;
 
@@ -191,7 +200,8 @@ void setup() {
     switch (p->Type) {
       case Analog:
       case AnalogOut:
-        // No setup needed
+      case DigitalOut:
+        pinMode(p->Num, OUTPUT);
         break;
       case Digital:
       case DigitalPullup:
