@@ -3,7 +3,7 @@
 #include <Bounce2.h>
 
 // Midi controller
-// by Brian J. Johnson  5/21/2017
+// by Brian J. Johnson 2017
 
 #include "DataStructures.h"
 #include "Configuration.h"
@@ -152,11 +152,16 @@ void FindProgram (byte channelNum, byte programNum) {
     EventMap *m = &EventList[i];
 
     if (m->Pin == INIT_PIN) {
-      // Call GenerteEvent with state=1023 (the max), and an impossible
+      // Call GenerateEvent with state=1023 (the max), and an impossible
       // lastValue which guarantees new data will be sent
-      LastValue[i] = GenerateEvent(&m->Evt, 1023, 0xff);
+      LastValue[i] = GenerateEvent(&m->Evt, 1023, 0x80);
+    }
+    else if (m->Handling == LatchingOn) {
+      // Default the value to "on"
+      LastValue[i] = 0x7f;
     }
     else {
+      // Default the value to "off"
       LastValue[i] = 0;
     }
   }
@@ -295,7 +300,8 @@ void loop() {
       changed = (NewState[pinNum] != PinState[pinNum]);
       break;
 
-    case Latching:
+    case LatchingOff:
+    case LatchingOn:
       // Fetch current latch state based on last value sent
       if (LastValue[i] < 64) {
         state = 0;

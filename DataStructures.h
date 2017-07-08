@@ -1,5 +1,5 @@
 // Data structures for MIDI controller
-// by Brian J. Johnson  5/21/2017
+// by Brian J. Johnson 2017
 
 // Input pins
 
@@ -11,9 +11,10 @@ typedef enum _pinType {
 } PinType;
 
 typedef enum _pinHandling {
-  Momentary,
-  Latching,
-  Continuous
+  Momentary,   // On with button press, off with release
+  LatchingOff, // On with button press, off with next press
+  LatchingOn,  // Off with button press, on with next press
+  Continuous   // Output value scales with input value
 } PinHandling;
 
 typedef struct _pin {
