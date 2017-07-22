@@ -1,4 +1,15 @@
 #include <MIDI.h>
+#ifndef CORE_TEENSY // Leonardo/Pro Micro USB MIDI library
+#include <midi_UsbTransport.h>
+
+static const unsigned sUsbTransportBufferSize = 16;
+typedef midi::UsbTransport<sUsbTransportBufferSize> UsbTransport;
+
+UsbTransport sUsbTransport;
+
+MIDI_CREATE_INSTANCE(UsbTransport, sUsbTransport, usbMIDI); // USB
+MIDI_CREATE_DEFAULT_INSTANCE(); // Serial
+#endif // CORE_TEENSY
 
 #include <Bounce2.h>
 
@@ -357,9 +368,10 @@ void loop() {
     PinState[pinNum] = NewState[pinNum];
   }
 
-  // Send any queued USB MIDI data
+#ifdef CORE_TEENSY  // Send any queued USB MIDI data
   usbMIDI.send_now();
   USE_SERIAL_PORT.flush(); // Serial port underlying MIDI library
+#endif
 
   delay(1); // Don't send too quickly.  FIXME do something more?
 }
