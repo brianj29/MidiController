@@ -276,7 +276,8 @@ void loop() {
       else if (state > p->Max) {
         state = p->Max;
       }
-      state = 1023 * (state - p->Min) / (p->Max - p->Min);
+      // use a wide enough integer for the intermediate values
+      state = (uint32_t)1023 * (state - p->Min) / (p->Max - p->Min);
       break;
     case Digital:
     case DigitalPullup:
