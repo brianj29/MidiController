@@ -89,6 +89,12 @@ uint8_t GenerateEvent(Event *Evt, int state, uint8_t lastValue) {
     // Scale the LED/PWM output between OffValue and OnValue
     OutEvent *outEvt;
     outEvt = &Evt->Out;
+    if (outEvt->OutPin >= PIN_COUNT) {
+#if 0
+      Serial.println(String("Out ") + outEvt->OutPin + " out of range");
+#endif
+      break;
+    }
     value =
       outEvt->OffValue +
       (state * (outEvt->OnValue - outEvt->OffValue) / 1023);
@@ -210,6 +216,8 @@ void setup() {
     Pin *p = &Pins[i];
     switch (p->Type) {
       case Analog:
+        // Do nothing
+        break;
       case AnalogOut:
       case DigitalOut:
         pinMode(p->Num, OUTPUT);

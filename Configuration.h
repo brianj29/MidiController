@@ -5,7 +5,7 @@
 
 Pin Pins[] = {
   // Idx     Type       pin number   min   max
-  /* 0 */ {Analog,        0,         133,  680},
+  /* 0 */ {Analog,        A0,        133,  680},
   /* 1 */ {DigitalPullup, 8,         0,    1023},
   /* 2 */ {DigitalPullup, 9,         0,    1023},
   //  /* 3 */ {AnalogOut,     22,        0,    255},
