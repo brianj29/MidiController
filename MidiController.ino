@@ -261,7 +261,16 @@ void loop() {
     }
   }
   while (MIDI.read()) {
-    // Do nothing
+    byte msgType = MIDI.getType();
+    if (msgType == ProgramChange) {
+      FindProgram(MIDI.getChannel(), MIDI.getData1());  // Or just use callbacks?
+    }
+    else {
+#if 0
+      Serial.println(String("->Msg ") + String(msgType, HEX) + " " +
+                     MIDI.getData1() + " " + MIDI.getData2());
+#endif
+    }
   }
 
   // Poll the input pins
