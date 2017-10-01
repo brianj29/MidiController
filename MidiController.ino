@@ -38,6 +38,7 @@ uint8_t GenerateEvent(Event *Evt, int state, uint8_t lastValue) {
   uint8_t value;
 
   //Serial.println("  Evt " + String(i) + " t" + genEvt->Type + ": ");
+  value = 0;
   switch (Evt->Generic.Type) {
   case NoteEventType:
     // Send note on for off->on transition, note off for on->off transition
@@ -114,7 +115,6 @@ uint8_t GenerateEvent(Event *Evt, int state, uint8_t lastValue) {
     break;
 
   default:
-    value = 0;
     break;
   }
 
