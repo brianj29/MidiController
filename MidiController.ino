@@ -132,7 +132,7 @@ void FindProgram (byte channelNum, byte programNum) {
   // or default to the first entry
 
   for (i = 0; i < sizeof(DefaultEventList) / sizeof(DefaultEventList[0]); i++) {
-    ProgramEvent *pgm;
+    const ProgramEvent *pgm;
 
     if (DefaultEventList[i].Pin != PROGRAM_PIN) {
       continue;
@@ -213,7 +213,7 @@ void setup() {
   // Configure the i/o pins
 
   for (unsigned i = 0; i < PIN_COUNT; i++) {
-    Pin *p = &Pins[i];
+    const Pin *p = &Pins[i];
     switch (p->Type) {
       case Analog:
         // Do nothing
@@ -276,7 +276,7 @@ void loop() {
   // Poll the input pins
 
   for (pinNum = 0; pinNum < PIN_COUNT; pinNum++) {
-    Pin *p = &Pins[pinNum];
+    const Pin *p = &Pins[pinNum];
     int val;     // Value read, 0-1023
     int state;   // Output state of the pin
 

@@ -31,8 +31,6 @@ typedef struct _pin {
 // Fake pin number to indicate the start of a program
 #define PROGRAM_PIN 254
 
-extern Pin Pins[];
-
 
 // Output controllers
 

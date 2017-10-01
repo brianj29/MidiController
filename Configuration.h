@@ -3,7 +3,7 @@
 
 // Input pins.  Edit these to reflect the physical board
 
-Pin Pins[] = {
+const Pin Pins[] = {
   // Idx     Type       pin number   min   max
   /* 0 */ {Analog,        A0,        133,  680},
   /* 1 */ {DigitalPullup, 8,         0,    1023},
@@ -34,7 +34,7 @@ Pin Pins[] = {
 #define PROGRAM(_ch, _p) \
   {PROGRAM_PIN, Momentary, PRGM_EVENT(_ch, _p)}
 
-EventMap DefaultEventList[] = {
+const EventMap DefaultEventList[] = {
   // Pin array idx, Handling, Event macro
   PROGRAM(1, 90), // 4ZonesBJJ
   {INIT_PIN, Momentary, CNTL_EVENT(1, 0x1  /*modwheel*/, 0, 0)}, // Mod=0
