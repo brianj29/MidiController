@@ -287,14 +287,13 @@ void loop() {
       // Scale the input value to find the pin state
       val = analogRead(p->Num);
       state = val;
-      if (state < p->Min) {
-        state = p->Min;
+      if (p->Min < p->Max) {
+        state = constrain(state, p->Min, p->Max);
       }
-      else if (state > p->Max) {
-        state = p->Max;
+      else {
+        state = constrain(state, p->Max, p->Min);
       }
-      // use a wide enough integer for the intermediate values
-      state = (uint32_t)1023 * (state - p->Min) / (p->Max - p->Min);
+      state = map(state, p->Min, p->Max, 0, 1023);
       break;
     case Digital:
     case DigitalPullup:
