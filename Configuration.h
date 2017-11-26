@@ -1,6 +1,29 @@
 // Configuration for MIDI controller
 // by Brian J. Johnson 2017
 
+// This file configures the MIDI controller for your particular project.
+// It begins with a section of compile-time constants to control logging
+// and other features.  Next is the definition of the physical I/O pins
+// on your board, including what they are used for (analog input, digital
+// output to a LED, etc.) and their ranges.  Last is an array defining
+// how pin changes generate output events, such as MIDI messages and LED
+// changes.
+// 
+// In theory, this is the only part of the sketch you need to modify to
+// configure it for a particular project.
+
+// General configuration constants.  Define or undefine them as needed.
+
+#undef WAIT_FOR_SERIAL // Wait for serial port to connect before running
+
+// Which types of data to log to the serial console
+
+#undef  LOG_PINS    // Input pin values
+#define LOG_EVENTS  // Output events
+#define LOG_PROGRAM // Program changes
+#undef  LOG_MIDIIN  // Other MIDI input
+#define LOG_ERRORS  // Configuration errors
+
 // Input pins.  Edit these to reflect the physical board
 
 const Pin Pins[] = {

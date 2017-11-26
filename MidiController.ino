@@ -45,12 +45,16 @@ uint8_t GenerateEvent(Event *Evt, int state, uint8_t lastValue) {
     NoteEvent *noteEvt;
     noteEvt = &Evt->Note;
     if (state > 512) {
+#ifdef LOG_EVENTS
       Serial.println(String("On  ") + noteEvt->Channel + "/" + noteEvt->Note + ": " + noteEvt->OnVelocity);
+#endif
       usbMIDI.sendNoteOn(noteEvt->Note, noteEvt->OnVelocity, noteEvt->Channel);
       MIDI.sendNoteOn(noteEvt->Note, noteEvt->OnVelocity, noteEvt->Channel);
     }
     else {
+#ifdef LOG_EVENTS
       Serial.println(String("Off ") + noteEvt->Channel + "/" + noteEvt->Note + ": " + noteEvt->OffVelocity);
+#endif
       usbMIDI.sendNoteOn(noteEvt->Note, noteEvt->OffVelocity, noteEvt->Channel);
       MIDI.sendNoteOn(noteEvt->Note, noteEvt->OffVelocity, noteEvt->Channel);
     }
@@ -65,7 +69,9 @@ uint8_t GenerateEvent(Event *Evt, int state, uint8_t lastValue) {
       ctlEvt->OffValue +
       (state * (ctlEvt->OnValue - ctlEvt->OffValue) / 1023);
     if (value != lastValue) {
+#ifdef LOG_EVENTS
       Serial.println(String("Ctl ") + ctlEvt->Channel + "/" + ctlEvt->Controller + ": " + value);
+#endif
       usbMIDI.sendControlChange(ctlEvt->Controller, value, ctlEvt->Channel);
       MIDI.sendControlChange(ctlEvt->Controller, value, ctlEvt->Channel);
     }
@@ -76,12 +82,16 @@ uint8_t GenerateEvent(Event *Evt, int state, uint8_t lastValue) {
     ProgramEvent *pgmEvt;
     if (state > 512) {
       pgmEvt = &Evt->Program;
+#ifdef LOG_EVENTS
       Serial.println(String("Pgm ") + pgmEvt->Channel + "/" + pgmEvt->Program);
+#endif
       usbMIDI.sendProgramChange(pgmEvt->Program, pgmEvt->Channel);
       MIDI.sendProgramChange(pgmEvt->Program, pgmEvt->Channel);
     }
     else {
+#ifdef LOG_EVENTS
       Serial.println("<none>");
+#endif
     }
     value = state / 8; // Scale to 0-127 range
     break;
@@ -91,7 +101,7 @@ uint8_t GenerateEvent(Event *Evt, int state, uint8_t lastValue) {
     OutEvent *outEvt;
     outEvt = &Evt->Out;
     if (outEvt->OutPin >= PIN_COUNT) {
-#if 0
+#ifdef LOG_ERRORS
       Serial.println(String("Out ") + outEvt->OutPin + " out of range");
 #endif
       break;
@@ -100,7 +110,9 @@ uint8_t GenerateEvent(Event *Evt, int state, uint8_t lastValue) {
       outEvt->OffValue +
       (state * (outEvt->OnValue - outEvt->OffValue) / 1023);
     if (value != lastValue) {
+#ifdef LOG_EVENTS
       Serial.println(String("Out ") + outEvt->OutPin + ": " + value);
+#endif
       switch (Pins[outEvt->OutPin].Type) {
       case AnalogOut:
         analogWrite(Pins[outEvt->OutPin].Num, value);
@@ -126,8 +138,10 @@ void FindProgram (byte channelNum, byte programNum) {
   unsigned i;
   unsigned count;
 
+#ifdef LOG_PROGRAM
   Serial.println(String("->Pgm ") + channelNum + "." + programNum);
-
+#endif
+  
   // Find the requested channel and program number in the list,
   // or default to the first entry
 
@@ -140,7 +154,9 @@ void FindProgram (byte channelNum, byte programNum) {
 
     pgm = &DefaultEventList[i].Evt.Program;
     if (pgm->Type != ProgramEventType) {
+#ifdef LOG_ERRORS
       Serial.println("Bad program entry at index " + i);
+#endif
       continue;
     }
 
@@ -151,7 +167,9 @@ void FindProgram (byte channelNum, byte programNum) {
 
   if (i >= sizeof(DefaultEventList) / sizeof(DefaultEventList[0])) {
     // Not found, use the first table entry as the default
+#ifdef LOG_PROGRAM
     Serial.println(" (not found)");
+#endif
     i = 0;
   }
 
@@ -196,7 +214,7 @@ void FindProgram (byte channelNum, byte programNum) {
 
 void setup() {
   Serial.begin(38400);  // For debugging
-#if 0
+#ifdef WAIT_FOR_SERIAL
   while (!Serial) { }   // Wait for USB serial to connect
 #endif
 
@@ -230,8 +248,10 @@ void setup() {
         PinBounce[i].interval(5);
         break;
       default:
+#ifdef LOG_ERRORS
         Serial.print("Bad pin type in Pins entry ");
         Serial.println(i);
+#endif
     }
     PinState[i] = 0;
   }
@@ -254,7 +274,7 @@ void loop() {
       FindProgram(usbMIDI.getChannel(), usbMIDI.getData1());  // Or just use callbacks?
     }
     else {
-#if 0
+#ifdef LOG_MIDIIN
       Serial.println(String("->Msg ") + msgType + " " +
                      usbMIDI.getData1() + " " + usbMIDI.getData2());
 #endif
@@ -266,7 +286,7 @@ void loop() {
       FindProgram(MIDI.getChannel(), MIDI.getData1());  // Or just use callbacks?
     }
     else {
-#if 0
+#ifdef LOG_MIDIIN
       Serial.println(String("->Msg ") + String(msgType, HEX) + " " +
                      MIDI.getData1() + " " + MIDI.getData2());
 #endif
@@ -311,7 +331,9 @@ void loop() {
     // Save the pin state for the controller loop below
     NewState[pinNum] = state;
     if (NewState[pinNum] != PinState[pinNum]) {
+#ifdef LOG_PINS
         Serial.println(String("Pin ") + p->Num + ":" + val + ";" + state);
+#endif
     }
   } // for (pinNum)
 
