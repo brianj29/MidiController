@@ -142,6 +142,18 @@ void FindProgram (byte channelNum, byte programNum) {
   Serial.println(String("->Pgm ") + channelNum + "." + programNum);
 #endif
   
+  // Send any patch exit events for the old program
+
+  for (i = 0; i < NumEvents; i++) {
+    EventMap *m = &EventList[i];
+
+    if (m->Pin == EXIT_PIN) {
+      // Call GenerateEvent with state=1023 (the max), and an impossible
+      // lastValue which guarantees new data will be sent
+      LastValue[i] = GenerateEvent(&m->Evt, 1023, 0x80);
+    }
+  }
+
   // Find the requested channel and program number in the list,
   // or default to the first entry
 
@@ -258,6 +270,7 @@ void setup() {
 
   // Initialize to first program in table
 
+  NumEvents = 0;
   FindProgram (DefaultEventList[0].Evt.Program.Channel,
                DefaultEventList[0].Evt.Program.Program);
 }
@@ -347,7 +360,7 @@ void loop() {
     // Detect changes, for use in the event type handlers below
 
     pinNum = m->Pin;
-    if (pinNum == INIT_PIN || pinNum == PROGRAM_PIN) {
+    if (pinNum == INIT_PIN || pinNum == EXIT_PIN || pinNum == PROGRAM_PIN) {
       // Skip special pin IDs
       continue;
     }

@@ -30,8 +30,11 @@ typedef struct _pin {
 // Fake pin number to trigger at initialization time
 #define INIT_PIN 255
 
+// Fake pin number to trigger when switching away from a patch
+#define EXIT_PIN 254
+
 // Fake pin number to indicate the start of a program
-#define PROGRAM_PIN 254
+#define PROGRAM_PIN 253
 
 
 // Output controllers
