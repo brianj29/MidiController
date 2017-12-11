@@ -49,6 +49,7 @@ To understand the inverting ranges, do something like this:
 
 #include <math.h>
 
+#ifdef DEMO
 int j;
 float scaledResult; 
 
@@ -65,6 +66,7 @@ void loop(){
     Serial.println(scaledResult , DEC); 
   }  
 }
+#endif // DEMO
 
 float fscale( float originalMin, float originalMax, float newBegin, float
 newEnd, float inputValue, float curve){
@@ -74,7 +76,7 @@ newEnd, float inputValue, float curve){
   float zeroRefCurVal = 0;
   float normalizedCurVal = 0;
   float rangedValue = 0;
-  boolean invFlag = 0;
+  int   invFlag = 0;
 
 
   // condition curve parameter

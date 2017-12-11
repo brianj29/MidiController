@@ -19,6 +19,10 @@ MIDI_CREATE_DEFAULT_INSTANCE(); // Serial
 #include "DataStructures.h"
 #include "Configuration.h"
 
+extern float fscale(float originalMin, float originalMax,
+                    float newBegin, float newEnd,
+                    float inputValue, float curve);
+
 // Global state
 
 #define PIN_COUNT (sizeof(Pins) / sizeof(Pins[0]))
@@ -65,9 +69,7 @@ uint8_t GenerateEvent(Event *Evt, int state, uint8_t lastValue) {
     // Scale controller value between OffValue and OnValue
     ControllerEvent *ctlEvt;
     ctlEvt = &Evt->Controller;
-    value =
-      ctlEvt->OffValue +
-      (state * (ctlEvt->OnValue - ctlEvt->OffValue) / 1023);
+    value = map(state, 0, 1023, ctlEvt->OffValue, ctlEvt->OnValue);
     if (value != lastValue) {
 #ifdef LOG_EVENTS
       Serial.println(String("Ctl ") + ctlEvt->Channel + "/" + ctlEvt->Controller + ": " + value);
@@ -106,9 +108,7 @@ uint8_t GenerateEvent(Event *Evt, int state, uint8_t lastValue) {
 #endif
       break;
     }
-    value =
-      outEvt->OffValue +
-      (state * (outEvt->OnValue - outEvt->OffValue) / 1023);
+    value = map(state, 0, 1023, outEvt->OffValue, outEvt->OnValue);
     if (value != lastValue) {
 #ifdef LOG_EVENTS
       Serial.println(String("Out ") + outEvt->OutPin + ": " + value);
@@ -308,12 +308,11 @@ void loop() {
       val = analogRead(p->Num);
       state = val;
       if (p->Min < p->Max) {
-        state = constrain(state, p->Min, p->Max);
+        state = fscale(p->Min, p->Max, 0, 1023, state, p->Curve);
       }
       else {
-        state = constrain(state, p->Max, p->Min);
+        state = fscale(p->Max, p->Min, 1023, 0, state, p->Curve);
       }
-      state = map(state, p->Min, p->Max, 0, 1023);
       break;
     case Digital:
     case DigitalPullup:

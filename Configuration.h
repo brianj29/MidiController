@@ -27,14 +27,12 @@
 // Input pins.  Edit these to reflect the physical board
 
 const Pin Pins[] = {
-  // Idx     Type       pin number   min   max
-  /* 0 */ {Analog,        A0,        645,  80}, // So direction is reversed
-  /* 1 */ {DigitalPullup, 11,        0,    1023},
-  /* 2 */ {DigitalPullup, 12,        0,    1023},
-  //  /* 3 */ {AnalogOut,     22,        0,    255},
-  //  /* 4 */ {AnalogOut,     20,        0,    255},
-  /* 3 */ {DigitalOut,    3,         0,    255},
-  /* 4 */ {DigitalOut,    4,         0,    255},
+  // Idx     Type       pin number   min   max   curve
+  /* 0 */ {Analog,        A0,        645,  80,   -1.25}, // Direction reversed
+  /* 1 */ {DigitalPullup, 11,        0,    1023,  0.0},
+  /* 2 */ {DigitalPullup, 12,        0,    1023,  0.0},
+  /* 3 */ {DigitalOut,    3,         0,    255,   0.0},
+  /* 4 */ {DigitalOut,    4,         0,    255,   0.0},
 };
 
 

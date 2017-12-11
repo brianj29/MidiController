@@ -23,6 +23,8 @@ typedef struct _pin {
   int         Num;  // Hardware pin number
   int         Min;  // Min/max values, for calibration
   int         Max;
+  float       Curve; // Weighting of low vs. high end of range.
+                     // -10.0 to 10.0.  Only used for Analog pins.
 } Pin;
 
 // Fake pin number to trigger at initialization time
