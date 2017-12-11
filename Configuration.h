@@ -56,42 +56,78 @@ const Pin Pins[] = {
   {PROGRAM_PIN, Momentary, PRGM_EVENT(_ch, _p)}
 
 const EventMap DefaultEventList[] = {
-  // First event in the table is the default
   // Pin array idx, Handling, Event macro
-  PROGRAM(1, 90), // 4ZonesBJJ
+  PROGRAM(255, 255), // Illegal values, so first in table is only the default
+  // Turn off modulation on all layers, in case the wheel got bumped
   {INIT_PIN, Momentary, CNTL_EVENT(1, 0x1  /*modwheel*/, 0, 0)}, // Mod=0
   {INIT_PIN, Momentary, CNTL_EVENT(2, 0x1  /*modwheel*/, 0, 0)}, // Mod=0
   {INIT_PIN, Momentary, CNTL_EVENT(3, 0x1  /*modwheel*/, 0, 0)}, // Mod=0
   {INIT_PIN, Momentary, CNTL_EVENT(4, 0x1  /*modwheel*/, 0, 0)}, // Mod=0
+  // Turn off the LEDs
+  {INIT_PIN, Momentary, OUTP_EVENT(3, 0x0, 0x0)},
+  {INIT_PIN, Momentary, OUTP_EVENT(4, 0x0, 0x0)},
+  // Pedal controlls expression for all layers
+  {0, Continuous,  CNTL_EVENT(1, 0x0b  /*expression*/, 127, 0)},
+  {0, Continuous,  CNTL_EVENT(2, 0x0b  /*expression*/, 127, 0)},
+  {0, Continuous,  CNTL_EVENT(3, 0x0b  /*expression*/, 127, 0)},
+  {0, Continuous,  CNTL_EVENT(4, 0x0b  /*expression*/, 127, 0)},
+  // On exit, restore all expression levels to max
+  {EXIT_PIN, Momentary, CNTL_EVENT(1, 0xb  /*expr*/,   127, 127)},
+  {EXIT_PIN, Momentary, CNTL_EVENT(2, 0xb  /*expr*/,   127, 127)},
+  {EXIT_PIN, Momentary, CNTL_EVENT(3, 0xb  /*expr*/,   127, 127)},
+  {EXIT_PIN, Momentary, CNTL_EVENT(4, 0xb  /*expr*/,   127, 127)},
+
+  PROGRAM(1, 90), // 4ZonesBJJ
+  {INIT_PIN, Momentary, CNTL_EVENT(3, 0xb  /*expr*/, 0, 0)}, // Disable layer 3
+  {INIT_PIN, Momentary, CNTL_EVENT(4, 0xb  /*expr*/, 0, 0)}, // Disable layer 4
   {INIT_PIN, Momentary, OUTP_EVENT(3, 0x0, 0x0)}, // Turn off LED
   {INIT_PIN, Momentary, OUTP_EVENT(4, 0x0, 0x0)}, // Turn off LED
+  // Pedal controls volume for layers 3 (string) and 4 (pad)
   {0, Continuous,  CNTL_EVENT(3, 0x7  /*volume*/, 127, 0)}, // Layer volume
   {0, Continuous,  CNTL_EVENT(4, 0x7  /*volume*/, 127, 0)},
-  {1, LatchingOff, CNTL_EVENT(3, 0xb  /*expr*/,   127, 0)}, // Layer 3 enable
+  // Button 1 controls enable/disable of layer 3 via expression controller
+  {1, LatchingOff, CNTL_EVENT(3, 0xb  /*expr*/,   127, 0)},
   {1, LatchingOff, OUTP_EVENT(3, 0xff, 0x0)}, // Light LED based on input pin
+  // Button 2 does the same for layer 4
   {2, LatchingOff, CNTL_EVENT(4, 0xb  /*expr*/,   127, 0)}, // Layer 4 enable
   {2, LatchingOff, OUTP_EVENT(4, 0xff, 0x0)}, // Light LED based on input pin
+  // On exit, restore all volume and expression levels to max
   {EXIT_PIN, Momentary, CNTL_EVENT(3, 0x7  /*volume*/, 127, 127)}, // Vol=max
   {EXIT_PIN, Momentary, CNTL_EVENT(4, 0x7  /*volume*/, 127, 127)},
   {EXIT_PIN, Momentary, CNTL_EVENT(3, 0xb  /*expr*/,   127, 127)}, // Expr=max
   {EXIT_PIN, Momentary, CNTL_EVENT(4, 0xb  /*expr*/,   127, 127)},
 
   PROGRAM(1, 91), // 9Draw Org6
+  // Initialize to rotating speakers on "fast"
   {INIT_PIN, Momentary, CNTL_EVENT(1, 0x1  /*modwheel*/, 0, 0)}, // Mod=0
   {INIT_PIN, Momentary, CNTL_EVENT(0, 0x12 /*DSP #3*/, 127, 127)}, // Rot=fast
   {INIT_PIN, Momentary, CNTL_EVENT(1, 0x12 /*DSP #3*/, 127, 127)},
   {INIT_PIN, Momentary, OUTP_EVENT(3, 0xff, 0xff)}, // Turn on LED
   {INIT_PIN, Momentary, OUTP_EVENT(4, 0x0, 0x0)},   // Turn off LED
+  // Pedal controls volume via expression
   {0, Continuous,  CNTL_EVENT(0, 0x0b  /*expression*/, 127, 0)}, // Volume
   {0, Continuous,  CNTL_EVENT(1, 0x0b  /*expression*/, 127, 0)},
   {0, Continuous,  CNTL_EVENT(2, 0x0b  /*expression*/, 127, 0)},
-  {1, LatchingOn,  CNTL_EVENT(0, 0x12  /*DSP #3*/, 127, 0)},   // Rot. speed
+  // Switch 1 controls rotating speaker speed
+  {1, LatchingOn,  CNTL_EVENT(0, 0x12  /*DSP #3*/, 127, 0)},
   {1, LatchingOn,  CNTL_EVENT(1, 0x12  /*DSP #3*/, 127, 0)},
   {1, LatchingOn,  OUTP_EVENT(3, 0xff, 0x0)}, // Light LED based on input pin
-  {2, LatchingOff, CNTL_EVENT(0, 0x13  /*DSP #4*/, 127, 0)},   // Rot on/off
+  // Switch 2 controls rotating speaker brake
+  {2, LatchingOff, CNTL_EVENT(0, 0x13  /*DSP #4*/, 127, 0)},
   {2, LatchingOff, CNTL_EVENT(1, 0x13  /*DSP #4*/, 127, 0)},
   {2, LatchingOff, OUTP_EVENT(4, 0xff, 0x0)}, // Light LED based on input pin
+  // On exit, restore all expression levels to max
   {EXIT_PIN, Momentary, CNTL_EVENT(0, 0xb  /*expr*/,   127, 127)}, // Expr=max
   {EXIT_PIN, Momentary, CNTL_EVENT(1, 0xb  /*expr*/,   127, 127)},
   {EXIT_PIN, Momentary, CNTL_EVENT(2, 0xb  /*expr*/,   127, 127)},
+
+  PROGRAM(1, 95), // PolySynthBJJ
+  // Pedal controls cutoff
+  {0, Continuous,  CNTL_EVENT(1, 0x4a /* cutoff */, 127, 0)},
+  // Switch 1 toggles portamento time between two values
+  {1, LatchingOff, CNTL_EVENT(1, 0x05 /* portamento */, 60, 0)},
+  {1, LatchingOff, OUTP_EVENT(3, 0xff, 0x0)}, // Light LED based on input pin
+  // Switch 2 controls resonance
+  {2, LatchingOff, CNTL_EVENT(1, 0x47 /* resonance */, 127, 0)},
+  {2, LatchingOff, OUTP_EVENT(4, 0xff, 0x0)}, // Light LED based on input pin
 };
