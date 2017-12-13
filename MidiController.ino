@@ -30,9 +30,10 @@ Bounce PinBounce[PIN_COUNT]; // Debouncer state
 int    PinState[PIN_COUNT];  // Previous value, indexed by pin
 int    NewState[PIN_COUNT];  // Current value, indexed by pin
 
-EventMap *EventList; // List of events to handle
-unsigned NumEvents;  // Number of entries in EventList
-uint8_t  *LastValue; // Last value calculated for controller
+EventMap *EventList;  // List of events to handle
+unsigned NumEvents;   // Number of entries in EventList
+uint8_t  *LastValue;  // Last value calculated for controller
+uint8_t  *LatchState; // Last state recorded for pin
 
 
 // Generate an output event, based on an input pin state and
@@ -59,8 +60,8 @@ uint8_t GenerateEvent(Event *Evt, int state, uint8_t lastValue) {
 #ifdef LOG_EVENTS
       Serial.println(String("Off ") + noteEvt->Channel + "/" + noteEvt->Note + ": " + noteEvt->OffVelocity);
 #endif
-      usbMIDI.sendNoteOn(noteEvt->Note, noteEvt->OffVelocity, noteEvt->Channel);
-      MIDI.sendNoteOn(noteEvt->Note, noteEvt->OffVelocity, noteEvt->Channel);
+      usbMIDI.sendNoteOff(noteEvt->Note, noteEvt->OffVelocity, noteEvt->Channel);
+      MIDI.sendNoteOff(noteEvt->Note, noteEvt->OffVelocity, noteEvt->Channel);
     }
     value = state / 8; // Scale to 0-127 range
     break;
@@ -194,13 +195,16 @@ void FindProgram (byte channelNum, byte programNum) {
     }
   }
 
-  // Initialize EventList, NumEvents, LastValue
+  // Initialize EventList, NumEvents, LastValue, LatchState
   NumEvents = count;
   EventList = (EventMap *)realloc (EventList, NumEvents * sizeof (*EventList));
   memcpy(EventList, &DefaultEventList[i], NumEvents * sizeof (*EventList));
 
   LastValue = (uint8_t *)realloc (LastValue, NumEvents * sizeof (*LastValue));
   memset(LastValue, 0, NumEvents * sizeof (*LastValue));
+
+  LatchState = (uint8_t *)realloc (LatchState, NumEvents * sizeof (*LatchState));
+  memset(LatchState, 0, NumEvents * sizeof (*LatchState));
 
   // Send any initialization events, and initialize LastValue[]
 
@@ -215,10 +219,12 @@ void FindProgram (byte channelNum, byte programNum) {
     else if (m->Handling == LatchingOn) {
       // Default the value to "on"
       LastValue[i] = 0x7f;
+      LatchState[i] = 1;
     }
     else {
       // Default the value to "off"
       LastValue[i] = 0;
+      LatchState[i] = 0;
     }
   }
 }
@@ -374,22 +380,15 @@ void loop() {
 
     case LatchingOff:
     case LatchingOn:
-      // Fetch current latch state based on last value sent
-      if (LastValue[i] < 64) {
-        state = 0;
-      }
-      else {
-        state = 1023;
-      }
-
       // Toggle state on button press
       if (PinState[pinNum] < 512 && NewState[pinNum] >= 512) {
-        state = 1023 - state;
+        LatchState[i] ^= 1;
         changed = 1;
       }
       else {
         changed = 0;
       }
+      state = (LatchState[i] == 0) ? 0 : 1023;
       break;
 
     default:
