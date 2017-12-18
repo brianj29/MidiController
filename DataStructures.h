@@ -73,8 +73,8 @@ typedef struct _ProgramEvent {
   EventType Type;
   uint8_t   Channel;
   uint8_t   Program;
-  uint8_t   unused1;
-  uint8_t   unused2;
+  uint8_t   BankLsb;
+  uint8_t   BankMsb;
 } ProgramEvent;
 
 typedef struct _OutEvent {

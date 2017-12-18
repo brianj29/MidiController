@@ -16,6 +16,13 @@
 
 #undef WAIT_FOR_SERIAL // Wait for serial port to connect before running
 
+// If defined, only handle program changes for bank numbers in this list:
+#define BANKS_TO_HANDLE \
+  0x7000,
+
+// If defined, ignore program changes for bank numbers in this list:
+#undef BANKS_TO_IGNORE
+
 // Which types of data to log to the serial console
 
 #undef  LOG_PINS    // Input pin values
@@ -38,26 +45,30 @@ const Pin Pins[] = {
 
 // Output MIDI events.  Edit these according to the output you want
 
+// Controller change:  channel, number, "on" value, "off" value
 #define CNTL_EVENT(_ch, _n, _on, _off) \
   {.Controller = {ControllerEventType, (_ch), (_n), (_on), (_off)}}
 
-#define PRGM_EVENT(_ch, _p) \
-  {.Program = {ProgramEventType, (_ch), (_p), 0, 0}}
+// Program change:  channel, program, bank (16 bits)
+#define PRGM_EVENT(_ch, _p, _b)        \
+  {.Program = {ProgramEventType, (_ch), (_p), (_b) & 0xff, ((_b) >> 8) & 0xff}}
 
+// Note:  channel, note, "on" velocity, "off" velocity
 #define NOTE_EVENT(_ch, _n, _on, _off) \
   {.Note = {NoteEventType, (_ch), (_n), (_on), (_off)}}
 
+// Set a pin:  pin, "on" PWM value, "off" PWM value
 #define OUTP_EVENT(_p, _on, _off) \
   {.Out = {OutEventType, (_p), (_on), (_off)}}
 
-// Header to indicate the start of a new program
-
-#define PROGRAM(_ch, _p) \
-  {PROGRAM_PIN, Momentary, PRGM_EVENT(_ch, _p)}
+// Header to indicate the start of a new program:
+// channel, program, bank (16 bits)
+#define PROGRAM(_ch, _p, _b)                   \
+  {PROGRAM_PIN, Momentary, PRGM_EVENT((_ch), (_p), (_b))}
 
 const EventMap DefaultEventList[] = {
   // Pin array idx, Handling, Event macro
-  PROGRAM(255, 255), // Illegal values, so first in table is only the default
+  PROGRAM(255, 0, 0), // Illegal value, so first in table is only the default
   // Turn off modulation on all layers, in case the wheel got bumped
   {INIT_PIN, Momentary, CNTL_EVENT(1, 0x1  /*modwheel*/, 0, 0)}, // Mod=0
   {INIT_PIN, Momentary, CNTL_EVENT(2, 0x1  /*modwheel*/, 0, 0)}, // Mod=0
@@ -77,7 +88,7 @@ const EventMap DefaultEventList[] = {
   {EXIT_PIN, Momentary, CNTL_EVENT(3, 0xb  /*expr*/,   127, 127)},
   {EXIT_PIN, Momentary, CNTL_EVENT(4, 0xb  /*expr*/,   127, 127)},
 
-  PROGRAM(1, 90), // 4ZonesBJJ
+  PROGRAM(1, 90, 0x7000), // 4ZonesBJJ
   {INIT_PIN, Momentary, CNTL_EVENT(3, 0xb  /*expr*/, 0, 0)}, // Disable layer 3
   {INIT_PIN, Momentary, CNTL_EVENT(4, 0xb  /*expr*/, 0, 0)}, // Disable layer 4
   {INIT_PIN, Momentary, OUTP_EVENT(3, 0x0, 0x0)}, // Turn off LED
@@ -97,7 +108,7 @@ const EventMap DefaultEventList[] = {
   {EXIT_PIN, Momentary, CNTL_EVENT(3, 0xb  /*expr*/,   127, 127)}, // Expr=max
   {EXIT_PIN, Momentary, CNTL_EVENT(4, 0xb  /*expr*/,   127, 127)},
 
-  PROGRAM(1, 91), // 9Draw Org6
+  PROGRAM(1, 91, 0x7000), // 9Draw Org6
   // Initialize to rotating speakers on "fast"
   {INIT_PIN, Momentary, CNTL_EVENT(1, 0x1  /*modwheel*/, 0, 0)}, // Mod=0
   {INIT_PIN, Momentary, CNTL_EVENT(0, 0x12 /*DSP #3*/, 127, 127)}, // Rot=fast
@@ -121,7 +132,7 @@ const EventMap DefaultEventList[] = {
   {EXIT_PIN, Momentary, CNTL_EVENT(1, 0xb  /*expr*/,   127, 127)},
   {EXIT_PIN, Momentary, CNTL_EVENT(2, 0xb  /*expr*/,   127, 127)},
 
-  PROGRAM(1, 95), // PolySynthBJJ
+  PROGRAM(1, 95, 0x7000), // PolySynthBJJ
   // Pedal controls cutoff
   {0, Continuous,  CNTL_EVENT(1, 0x4a /* cutoff */, 127, 0)},
   // Switch 1 toggles portamento time between two values

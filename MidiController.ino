@@ -35,6 +35,8 @@ unsigned NumEvents;   // Number of entries in EventList
 uint8_t  *LastValue;  // Last value calculated for controller
 uint8_t  *LatchState; // Last state recorded for pin
 
+uint8_t LastBankLsb = 0; // Last bank change sequence seen
+uint8_t LastBankMsb = 0;
 
 // Generate an output event, based on an input pin state and
 // the previous value generated
@@ -135,14 +137,51 @@ uint8_t GenerateEvent(Event *Evt, int state, uint8_t lastValue) {
 }
 
 
-void FindProgram (byte channelNum, byte programNum) {
+void FindProgram (byte channelNum, byte programNum, byte bankLsb, byte bankMsb) {
   unsigned i;
   unsigned count;
+  uint16_t bank;
 
+  bank = (LastBankMsb << 8) | LastBankLsb;
 #ifdef LOG_PROGRAM
-  Serial.println(String("->Pgm ") + channelNum + "." + programNum);
+  Serial.println(String("->Pgm ") +
+                 channelNum + ".0x" +
+                 String(bank, HEX) + "." +
+                 programNum);
 #endif
-  
+
+  // Validate the bank number
+
+#ifdef BANKS_TO_HANDLE
+  static const uint16_t BanksToHandle[] = {BANKS_TO_HANDLE};
+  for (i = 0; i < sizeof(BanksToHandle) / sizeof(BanksToHandle[0]); i++) {
+    if (BanksToHandle[i] == bank) {
+      break;
+    }
+  }
+
+  // If it wasn't in the list of banks to handle, ignore it
+  if (i >= sizeof(BanksToHandle) / sizeof(BanksToHandle[0])) {
+#ifdef LOG_PROGRAM
+    Serial.println(String("  (not handled)"));
+    return;
+#endif
+  }
+#endif
+
+#ifdef BANKS_TO_IGNORE
+  // If it's in BanksToIgnore, skip it
+  static const uint16_t BanksToIgnore[] = {BANKS_TO_IGNORE};
+  for (i = 0; i < sizeof(BanksToIgnore) / sizeof(BanksToIgnore[0]); i++) {
+    if (BanksToIgnore[i] == bank) {
+#ifdef LOG_PROGRAM
+      Serial.println("  (ignored)");
+#endif
+      return;
+    }
+  }
+#endif
+
   // Send any patch exit events for the old program
 
   for (i = 0; i < NumEvents; i++) {
@@ -155,7 +194,7 @@ void FindProgram (byte channelNum, byte programNum) {
     }
   }
 
-  // Find the requested channel and program number in the list,
+  // Find the requested channel, bank, and program number in the list,
   // or default to the first entry
 
   for (i = 0; i < sizeof(DefaultEventList) / sizeof(DefaultEventList[0]); i++) {
@@ -173,7 +212,8 @@ void FindProgram (byte channelNum, byte programNum) {
       continue;
     }
 
-    if (pgm->Channel == channelNum && pgm->Program == programNum) {
+    if (pgm->Channel == channelNum && pgm->Program == programNum &&
+        pgm->BankLsb == bankLsb && pgm->BankMsb == bankMsb) {
       break; // Found it!
     }
   }
@@ -230,6 +270,49 @@ void FindProgram (byte channelNum, byte programNum) {
 }
 
 
+void HandleMidiMsg(byte channel, byte msgType, byte data1, byte data2) {
+
+  // Process bank number changes
+
+  if (msgType == ControlChange) {
+    byte controllerNum = data1;
+    byte value = data2;
+
+    if (controllerNum == 0x00 /* Bank MSB */) {
+      LastBankMsb = value;
+#ifdef LOG_MIDIIN
+      Serial.println(String("->Msb 0x") + String(value, HEX));
+#endif
+    }
+    else if (controllerNum == 0x20 /* Bank LSB */) {
+      LastBankLsb = value;
+#ifdef LOG_MIDIIN
+      Serial.println(String("->Lsb 0x") + String(value, HEX));
+#endif
+    }
+    else {
+#ifdef LOG_MIDIIN
+      Serial.println(String("->Ctl ") + " " + controllerNum + " " + value);
+#endif
+    }
+  }
+
+  // Process program changes
+
+  else if (msgType == ProgramChange) {
+    FindProgram(channel, data1, LastBankLsb, LastBankMsb);
+  }
+
+#ifdef LOG_MIDIIN
+  // Dump other messages
+  else {
+    Serial.println(String("->Msg ") + String(msgType, HEX) + " " +
+                   data1 + " " + data2);
+  }
+#endif
+}
+
+
 void setup() {
   Serial.begin(38400);  // For debugging
 #ifdef WAIT_FOR_SERIAL
@@ -278,38 +361,30 @@ void setup() {
 
   NumEvents = 0;
   FindProgram (DefaultEventList[0].Evt.Program.Channel,
-               DefaultEventList[0].Evt.Program.Program);
+               DefaultEventList[0].Evt.Program.Program,
+               DefaultEventList[0].Evt.Program.BankLsb,
+               DefaultEventList[0].Evt.Program.BankMsb);
 }
 
 void loop() {
   unsigned pinNum;
 
-  // See if we have received a program change.  Discard all other incoming
-  // MIDI data, to keep from hanging the host.
+  // See if we have received a message we're interested in.  Discard
+  // all other incoming MIDI data, to keep from hanging the host.
 
   while (usbMIDI.read()) {
-    byte msgType = usbMIDI.getType();
-    if (msgType == 4 /*ProgramChange*/) {
-      FindProgram(usbMIDI.getChannel(), usbMIDI.getData1());  // Or just use callbacks?
-    }
-    else {
-#ifdef LOG_MIDIIN
-      Serial.println(String("->Msg ") + msgType + " " +
-                     usbMIDI.getData1() + " " + usbMIDI.getData2());
-#endif
-    }
+    HandleMidiMsg(
+      usbMIDI.getChannel(),
+      (usbMIDI.getType() << 4) | 0x80, // Convert to MIDI.h values
+      usbMIDI.getData1(),
+      usbMIDI.getData2());
   }
   while (MIDI.read()) {
-    byte msgType = MIDI.getType();
-    if (msgType == ProgramChange) {
-      FindProgram(MIDI.getChannel(), MIDI.getData1());  // Or just use callbacks?
-    }
-    else {
-#ifdef LOG_MIDIIN
-      Serial.println(String("->Msg ") + String(msgType, HEX) + " " +
-                     MIDI.getData1() + " " + MIDI.getData2());
-#endif
-    }
+    HandleMidiMsg(
+      MIDI.getChannel(),
+      MIDI.getType(),
+      MIDI.getData1(),
+      MIDI.getData2());
   }
 
   // Poll the input pins
