@@ -226,9 +226,16 @@ void FindProgram (byte channelNum, byte programNum, byte bankLsb, byte bankMsb) 
     i = 0;
   }
 
+  // Skip the PROGRAM_PIN entries
+
+  for (; i < sizeof(DefaultEventList) / sizeof(DefaultEventList[0]); i++) {
+    if (DefaultEventList[i].Pin != PROGRAM_PIN) {
+      break;
+    }
+  }
+
   // Count the entries
 
-  i++; // Skip the PROGRAM_PIN element
   for (count = 0; (i + count) < sizeof(DefaultEventList) / sizeof(DefaultEventList[0]); count++) {
     if (DefaultEventList[i + count].Pin == PROGRAM_PIN) {
       break;

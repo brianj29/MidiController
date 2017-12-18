@@ -89,6 +89,8 @@ const EventMap DefaultEventList[] = {
   {EXIT_PIN, Momentary, CNTL_EVENT(4, 0xb  /*expr*/,   127, 127)},
 
   PROGRAM(1, 90, 0x7000), // 4ZonesBJJ
+  PROGRAM(1, 98, 0x7000), // 4ZonesBJJDrm
+  PROGRAM(1, 99, 0x7000), // BJJViolin
   {INIT_PIN, Momentary, CNTL_EVENT(3, 0xb  /*expr*/, 0, 0)}, // Disable layer 3
   {INIT_PIN, Momentary, CNTL_EVENT(4, 0xb  /*expr*/, 0, 0)}, // Disable layer 4
   {INIT_PIN, Momentary, OUTP_EVENT(3, 0x0, 0x0)}, // Turn off LED
