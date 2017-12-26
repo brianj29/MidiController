@@ -95,7 +95,9 @@ const Pin Pins[] = {
 
 const EventMap DefaultEventList[] = {
   // Pin array idx, Handling, Event macro
-  PROGRAM(255, 0, 0), // Illegal value, so first in table is only the default
+  // Illegal value, so first in table is only the default.  But
+  // a handled bank number, so it's not ignored on initial boot.
+  PROGRAM(255, 0, 0x7000),
   // Turn off modulation on all layers, in case the wheel got bumped
   {INIT_PIN, Momentary, CNTL_EVENT(1, 0x1  /*modwheel*/, 0, 0)}, // Mod=0
   {INIT_PIN, Momentary, CNTL_EVENT(2, 0x1  /*modwheel*/, 0, 0)}, // Mod=0

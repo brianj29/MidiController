@@ -46,7 +46,6 @@ uint8_t LastBankMsb = 0;
 uint8_t GenerateEvent(Event *Evt, int state, uint8_t lastValue) {
   uint8_t value;
 
-  //Serial.println("  Evt " + String(i) + " t" + genEvt->Type + ": ");
   value = 0;
   switch (Evt->Generic.Type) {
   case NoteEventType:
@@ -144,7 +143,7 @@ void FindProgram (byte channelNum, byte programNum, byte bankLsb, byte bankMsb) 
   unsigned count;
   uint16_t bank;
 
-  bank = (LastBankMsb << 8) | LastBankLsb;
+  bank = (bankMsb << 8) | bankLsb;
 #ifdef LOG_PROGRAM
   Serial.println(String("->Pgm ") +
                  channelNum + ".0x" +
