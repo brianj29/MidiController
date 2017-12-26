@@ -22,6 +22,10 @@
 // Support MIDI over USB
 #define USE_USB_MIDI
 
+// Use the serial log.  If undefined, then WAIT_FOR_SERIAL and LOG_*
+// will be undefined as well.
+#define USE_SERIAL_PRINT
+
 // Wait for the serial port to connect before running
 #undef WAIT_FOR_SERIAL
 

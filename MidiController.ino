@@ -29,6 +29,17 @@ extern float fscale(float originalMin, float originalMax,
                     float inputValue, float curve);
 #endif
 
+// If the serial console isn't enabled, then disable all logging
+#ifndef USE_SERIAL_PRINT
+#undef WAIT_FOR_SERIAL
+#undef LOG_PINS    // Input pin values
+#undef LOG_EVENTS  // Output events
+#undef LOG_PROGRAM // Program changes
+#undef LOG_MIDIIN  // Other MIDI input
+#undef LOG_ERRORS  // Configuration errors
+#endif
+
+
 // Global state
 
 #define PIN_COUNT (sizeof(Pins) / sizeof(Pins[0]))
@@ -342,9 +353,12 @@ void HandleMidiMsg(byte channel, byte msgType, byte data1, byte data2) {
 
 
 void setup() {
+#ifdef USE_SERIAL_PRINT
   Serial.begin(38400);  // For debugging
+#endif
 #ifdef WAIT_FOR_SERIAL
   while (!Serial) { }   // Wait for USB serial to connect
+  delay(1000);
 #endif
 
   // Turn on the LED, so we can see the board is on
@@ -383,6 +397,7 @@ void setup() {
         Serial.print("Bad pin type in Pins entry ");
         Serial.println(i);
 #endif
+        break;
     }
     PinState[i] = 0;
   }
