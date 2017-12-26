@@ -19,9 +19,11 @@ MIDI_CREATE_DEFAULT_INSTANCE(); // Serial
 #include "DataStructures.h"
 #include "Configuration.h"
 
+#ifdef USE_FSCALE
 extern float fscale(float originalMin, float originalMax,
                     float newBegin, float newEnd,
                     float inputValue, float curve);
+#endif
 
 // Global state
 
@@ -408,12 +410,23 @@ void loop() {
       // Scale the input value to find the pin state
       val = analogRead(p->Num);
       state = val;
+#ifdef USE_FSCALE
       if (p->Min < p->Max) {
         state = fscale(p->Min, p->Max, 0, 1023, state, p->Curve);
       }
       else {
         state = fscale(p->Max, p->Min, 1023, 0, state, p->Curve);
       }
+#else
+      if (p->Min < p->Max) {
+        state = constrain(state, p->Min, p->Max);
+      }
+      else {
+        state = constrain(state, p->Max, p->Min);
+      }
+      state = map(state, p->Min, p->Max, 0, 1023);
+      break;
+#endif
       break;
     case Digital:
     case DigitalPullup:

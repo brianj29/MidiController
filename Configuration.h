@@ -12,9 +12,12 @@
 // In theory, this is the only part of the sketch you need to modify to
 // configure it for a particular project.
 
+//
 // General configuration constants.  Define or undefine them as needed.
+//
 
-#undef WAIT_FOR_SERIAL // Wait for serial port to connect before running
+// Wait for the serial port to connect before running
+#undef WAIT_FOR_SERIAL
 
 // If defined, only handle program changes for bank numbers in this list:
 #define BANKS_TO_HANDLE \
@@ -31,7 +34,31 @@
 #undef  LOG_MIDIIN  // Other MIDI input
 #define LOG_ERRORS  // Configuration errors
 
-// Input pins.  Edit these to reflect the physical board
+// Enable the code in Fscale.cpp to provide exponentially weighted,
+// floating-point scaling for analog inputs.  See the "curve" fields
+// in the "Pins" array.  You can disable this if you want to save code
+// space and/or avoid floating-point math.  If disabled, the sketch
+// will fall back to ordinary linear interpolation.
+
+#define USE_FSCALE
+
+// Input pins.  Edit these to reflect the physical board.
+//   Type:  Analog, Digital, DigitalPullup, AnalogOut, or DigitalOut
+//   Pin#:  Pin number as known to the Arduino libraries
+//   Min:   Expected reading at the physical "minimum" position
+//   Max:   Expected reading at the physical "maximum" position
+//   Curve: Exponential weighting factor.
+//
+//  Min, max, and curve are mainly useful for Analog inputs.  Readings
+//  outside the min..max range will be clamped.  Max can be less than
+//  min if the pin reads higher in the "minimum" position, i.e. the
+//  input is physically reversed.  The curve value changes the
+//  weighting between input and output at different points in the
+//  range.  Use negative values to emphasize the low end, and positive
+//  values to emphasize the high end.  Zero produces an ordinary
+//  linear mapping.  This can be quite useful to correct for
+//  nonlinearities in physical input hardwre, or for our ears'
+//  exponential perception of volume.  See Fscale.cpp
 
 const Pin Pins[] = {
   // Idx     Type       pin number   min   max   curve
