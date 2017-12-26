@@ -13,8 +13,14 @@
 // configure it for a particular project.
 
 //
-// General configuration constants.  Define or undefine them as needed.
+// General configuration constants.  Define or undef them as needed.
 //
+
+// Support MIDI over serial
+#define USE_SERIAL_MIDI
+
+// Support MIDI over USB
+#define USE_USB_MIDI
 
 // Wait for the serial port to connect before running
 #undef WAIT_FOR_SERIAL

@@ -1,5 +1,6 @@
 #include <MIDI.h>
 #ifndef CORE_TEENSY // Leonardo/Pro Micro USB MIDI library
+#ifdef USE_USB_MIDI
 #include <midi_UsbTransport.h>
 
 static const unsigned sUsbTransportBufferSize = 16;
@@ -8,7 +9,10 @@ typedef midi::UsbTransport<sUsbTransportBufferSize> UsbTransport;
 UsbTransport sUsbTransport;
 
 MIDI_CREATE_INSTANCE(UsbTransport, sUsbTransport, usbMIDI); // USB
+#endif
+#ifdef USE_SERIAL_MIDI
 MIDI_CREATE_DEFAULT_INSTANCE(); // Serial
+#endif
 #endif // CORE_TEENSY
 
 #include <Bounce2.h>
@@ -56,15 +60,23 @@ uint8_t GenerateEvent(Event *Evt, int state, uint8_t lastValue) {
 #ifdef LOG_EVENTS
       Serial.println(String("On  ") + noteEvt->Channel + "/" + noteEvt->Note + ": " + noteEvt->OnVelocity);
 #endif
+#ifdef USE_USB_MIDI
       usbMIDI.sendNoteOn(noteEvt->Note, noteEvt->OnVelocity, noteEvt->Channel);
+#endif
+#ifdef USE_SERIAL_MIDI
       MIDI.sendNoteOn(noteEvt->Note, noteEvt->OnVelocity, noteEvt->Channel);
+#endif
     }
     else {
 #ifdef LOG_EVENTS
       Serial.println(String("Off ") + noteEvt->Channel + "/" + noteEvt->Note + ": " + noteEvt->OffVelocity);
 #endif
+#ifdef USE_USB_MIDI
       usbMIDI.sendNoteOff(noteEvt->Note, noteEvt->OffVelocity, noteEvt->Channel);
+#endif
+#ifdef USE_SERIAL_MIDI
       MIDI.sendNoteOff(noteEvt->Note, noteEvt->OffVelocity, noteEvt->Channel);
+#endif
     }
     value = state / 8; // Scale to 0-127 range
     break;
@@ -78,8 +90,12 @@ uint8_t GenerateEvent(Event *Evt, int state, uint8_t lastValue) {
 #ifdef LOG_EVENTS
       Serial.println(String("Ctl ") + ctlEvt->Channel + "/" + ctlEvt->Controller + ": " + value);
 #endif
+#ifdef USE_USB_MIDI
       usbMIDI.sendControlChange(ctlEvt->Controller, value, ctlEvt->Channel);
+#endif
+#ifdef USE_SERIAL_MIDI
       MIDI.sendControlChange(ctlEvt->Controller, value, ctlEvt->Channel);
+#endif
     }
     break;
 
@@ -91,8 +107,12 @@ uint8_t GenerateEvent(Event *Evt, int state, uint8_t lastValue) {
 #ifdef LOG_EVENTS
       Serial.println(String("Pgm ") + pgmEvt->Channel + "/" + pgmEvt->Program);
 #endif
+#ifdef USE_USB_MIDI
       usbMIDI.sendProgramChange(pgmEvt->Program, pgmEvt->Channel);
+#endif
+#ifdef USE_SERIAL_MIDI
       MIDI.sendProgramChange(pgmEvt->Program, pgmEvt->Channel);
+#endif
     }
     else {
 #ifdef LOG_EVENTS
@@ -334,9 +354,11 @@ void setup() {
 
   // Initialize MIDI
   
+#ifdef USE_SERIAL_MIDI
   MIDI.begin(MIDI_CHANNEL_OMNI);
   MIDI.turnThruOff();
-  
+#endif
+
   // Configure the i/o pins
 
   for (unsigned i = 0; i < PIN_COUNT; i++) {
@@ -380,6 +402,7 @@ void loop() {
   // See if we have received a message we're interested in.  Discard
   // all other incoming MIDI data, to keep from hanging the host.
 
+#ifdef USE_USB_MIDI
   while (usbMIDI.read()) {
     HandleMidiMsg(
       usbMIDI.getChannel(),
@@ -387,6 +410,8 @@ void loop() {
       usbMIDI.getData1(),
       usbMIDI.getData2());
   }
+#endif
+#ifdef USE_SERIAL_MIDI
   while (MIDI.read()) {
     HandleMidiMsg(
       MIDI.getChannel(),
@@ -394,6 +419,7 @@ void loop() {
       MIDI.getData1(),
       MIDI.getData2());
   }
+#endif
 
   // Poll the input pins
 
@@ -513,8 +539,12 @@ void loop() {
   }
 
 #ifdef CORE_TEENSY  // Send any queued USB MIDI data
+#ifdef USE_USB_MIDI
   usbMIDI.send_now();
+#endif
+#ifdef USE_SERIAL_MIDI
   USE_SERIAL_PORT.flush(); // Serial port underlying MIDI library
+#endif
 #endif
 
   delay(1); // Don't send too quickly.  FIXME do something more?
