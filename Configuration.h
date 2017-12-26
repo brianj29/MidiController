@@ -44,6 +44,10 @@
 #undef  LOG_MIDIIN  // Other MIDI input
 #define LOG_ERRORS  // Configuration errors
 
+// Amount to delay between polls of the input pins.  Increase this if
+// MIDI data is being generated too quickly.
+#define LOOP_DELAY 1 // milliseconds
+
 // Enable the code in Fscale.cpp to provide exponentially weighted,
 // floating-point scaling for analog inputs.  See the "curve" fields
 // in the "Pins" array.  You can disable this if you want to save code

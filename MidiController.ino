@@ -562,5 +562,5 @@ void loop() {
 #endif
 #endif
 
-  delay(1); // Don't send too quickly.  FIXME do something more?
+  delay(LOOP_DELAY); // Don't send too quickly
 }
