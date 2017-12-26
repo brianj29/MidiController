@@ -82,6 +82,16 @@ const EventMap DefaultEventList[] = {
   {0, Continuous,  CNTL_EVENT(2, 0x0b  /*expression*/, 127, 0)},
   {0, Continuous,  CNTL_EVENT(3, 0x0b  /*expression*/, 127, 0)},
   {0, Continuous,  CNTL_EVENT(4, 0x0b  /*expression*/, 127, 0)},
+  // Button 1 controls hold/damper on all layers
+  {1, Momentary, CNTL_EVENT(1, 0x40  /*damper*/, 127, 0)},
+  {1, Momentary, CNTL_EVENT(2, 0x40  /*damper*/, 127, 0)},
+  {1, Momentary, CNTL_EVENT(3, 0x40  /*damper*/, 127, 0)},
+  {1, Momentary, CNTL_EVENT(4, 0x40  /*damper*/, 127, 0)},
+  // Button 2 controls sostenuto on all layers
+  {2, Momentary, CNTL_EVENT(1, 0x42  /*sostenuto*/, 127, 0)},
+  {2, Momentary, CNTL_EVENT(2, 0x42  /*sostenuto*/, 127, 0)},
+  {2, Momentary, CNTL_EVENT(3, 0x42  /*sostenuto*/, 127, 0)},
+  {2, Momentary, CNTL_EVENT(4, 0x42  /*sostenuto*/, 127, 0)},
   // On exit, restore all expression levels to max
   {EXIT_PIN, Momentary, CNTL_EVENT(1, 0xb  /*expr*/,   127, 127)},
   {EXIT_PIN, Momentary, CNTL_EVENT(2, 0xb  /*expr*/,   127, 127)},
@@ -133,6 +143,14 @@ const EventMap DefaultEventList[] = {
   {EXIT_PIN, Momentary, CNTL_EVENT(0, 0xb  /*expr*/,   127, 127)}, // Expr=max
   {EXIT_PIN, Momentary, CNTL_EVENT(1, 0xb  /*expr*/,   127, 127)},
   {EXIT_PIN, Momentary, CNTL_EVENT(2, 0xb  /*expr*/,   127, 127)},
+
+  PROGRAM(1, 93, 0x7000), // Illuminated2
+  {INIT_PIN, Momentary, OUTP_EVENT(3, 0x0, 0x0)}, // Turn off LED
+  {INIT_PIN, Momentary, OUTP_EVENT(4, 0x0, 0x0)}, // Turn off LED
+  // Pedal controls volume for layer 2 (pad)
+  {0, Continuous,  CNTL_EVENT(2, 0x7  /*volume*/, 127, 0)}, // Layer volume
+  // On exit, restore all volume levels to max
+  {EXIT_PIN, Momentary, CNTL_EVENT(2, 0x7  /*volume*/, 127, 127)}, // Vol=max
 
   PROGRAM(1, 95, 0x7000), // PolySynthBJJ
   // Pedal controls cutoff
