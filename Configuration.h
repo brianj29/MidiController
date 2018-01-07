@@ -166,26 +166,26 @@ const EventMap DefaultEventList[] = {
   PROGRAM(1, 91, 0x7000), // 9Draw Org6
   // Initialize to rotating speakers on "fast"
   {INIT_PIN, Momentary, CNTL_EVENT(1, 0x1  /*modwheel*/, 0, 0)}, // Mod=0
-  {INIT_PIN, Momentary, CNTL_EVENT(0, 0x12 /*DSP #3*/, 127, 127)}, // Rot=fast
-  {INIT_PIN, Momentary, CNTL_EVENT(1, 0x12 /*DSP #3*/, 127, 127)},
+  {INIT_PIN, Momentary, CNTL_EVENT(1, 0x12 /*DSP #3*/, 127, 127)}, // Rot=fast
+  {INIT_PIN, Momentary, CNTL_EVENT(2, 0x12 /*DSP #3*/, 127, 127)},
   {INIT_PIN, Momentary, OUTP_EVENT(3, 0xff, 0xff)}, // Turn on LED
   {INIT_PIN, Momentary, OUTP_EVENT(4, 0x0, 0x0)},   // Turn off LED
   // Pedal controls volume via expression
-  {0, Continuous,  CNTL_EVENT(0, 0x0b  /*expression*/, 127, 0)}, // Volume
-  {0, Continuous,  CNTL_EVENT(1, 0x0b  /*expression*/, 127, 0)},
+  {0, Continuous,  CNTL_EVENT(1, 0x0b  /*expression*/, 127, 0)}, // Volume
   {0, Continuous,  CNTL_EVENT(2, 0x0b  /*expression*/, 127, 0)},
+  {0, Continuous,  CNTL_EVENT(3, 0x0b  /*expression*/, 127, 0)},
   // Switch 1 controls rotating speaker speed
-  {1, LatchingOn,  CNTL_EVENT(0, 0x12  /*DSP #3*/, 127, 0)},
   {1, LatchingOn,  CNTL_EVENT(1, 0x12  /*DSP #3*/, 127, 0)},
+  {1, LatchingOn,  CNTL_EVENT(2, 0x12  /*DSP #3*/, 127, 0)},
   {1, LatchingOn,  OUTP_EVENT(3, 0xff, 0x0)}, // Light LED based on input pin
   // Switch 2 controls rotating speaker brake
-  {2, LatchingOff, CNTL_EVENT(0, 0x13  /*DSP #4*/, 127, 0)},
   {2, LatchingOff, CNTL_EVENT(1, 0x13  /*DSP #4*/, 127, 0)},
+  {2, LatchingOff, CNTL_EVENT(2, 0x13  /*DSP #4*/, 127, 0)},
   {2, LatchingOff, OUTP_EVENT(4, 0xff, 0x0)}, // Light LED based on input pin
   // On exit, restore all expression levels to max
-  {EXIT_PIN, Momentary, CNTL_EVENT(0, 0xb  /*expr*/,   127, 127)}, // Expr=max
-  {EXIT_PIN, Momentary, CNTL_EVENT(1, 0xb  /*expr*/,   127, 127)},
+  {EXIT_PIN, Momentary, CNTL_EVENT(1, 0xb  /*expr*/,   127, 127)}, // Expr=max
   {EXIT_PIN, Momentary, CNTL_EVENT(2, 0xb  /*expr*/,   127, 127)},
+  {EXIT_PIN, Momentary, CNTL_EVENT(3, 0xb  /*expr*/,   127, 127)},
 
   PROGRAM(1, 93, 0x7000), // Illuminated2
   {INIT_PIN, Momentary, OUTP_EVENT(3, 0x0, 0x0)}, // Turn off LED
