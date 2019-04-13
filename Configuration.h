@@ -142,15 +142,17 @@ const EventMap DefaultEventList[] = {
   {EXIT_PIN, Momentary, CNTL_EVENT(4, 0xb  /*expr*/,   127, 127)},
 
   PROGRAM(1, 90, 0x7000), // 4ZonesBJJ
+  PROGRAM(1, 97, 0x7000), // 4ZonesBJBass
   PROGRAM(1, 98, 0x7000), // 4ZonesBJJDrm
   PROGRAM(1, 99, 0x7000), // BJJViolin
+  {INIT_PIN, Momentary, CNTL_EVENT(2, 0x7  /*vol */, 0, 0)}, // Disable layer 2
   {INIT_PIN, Momentary, CNTL_EVENT(3, 0xb  /*expr*/, 0, 0)}, // Disable layer 3
   {INIT_PIN, Momentary, CNTL_EVENT(4, 0xb  /*expr*/, 0, 0)}, // Disable layer 4
   {INIT_PIN, Momentary, OUTP_EVENT(3, 0x0, 0x0)}, // Turn off LED
   {INIT_PIN, Momentary, OUTP_EVENT(4, 0x0, 0x0)}, // Turn off LED
   // Pedal controls volume for layers 3 (string) and 4 (pad)
-  {0, Continuous,  CNTL_EVENT(3, 0x7  /*volume*/, 127, 0)}, // Layer volume
-  {0, Continuous,  CNTL_EVENT(4, 0x7  /*volume*/, 127, 0)},
+  {0, Continuous,  CNTL_EVENT(3, 0x7  /*volume*/, 110, 0)}, // Layer volume
+  {0, Continuous,  CNTL_EVENT(4, 0x7  /*volume*/, 120, 0)},
   // Button 1 controls enable/disable of layer 3 via expression controller
   {1, LatchingOff, CNTL_EVENT(3, 0xb  /*expr*/,   127, 0)},
   {1, LatchingOff, OUTP_EVENT(3, 0xff, 0x0)}, // Light LED based on input pin
@@ -158,9 +160,11 @@ const EventMap DefaultEventList[] = {
   {2, LatchingOff, CNTL_EVENT(4, 0xb  /*expr*/,   127, 0)}, // Layer 4 enable
   {2, LatchingOff, OUTP_EVENT(4, 0xff, 0x0)}, // Light LED based on input pin
   // On exit, restore all volume and expression levels to max
-  {EXIT_PIN, Momentary, CNTL_EVENT(3, 0x7  /*volume*/, 127, 127)}, // Vol=max
+  {EXIT_PIN, Momentary, CNTL_EVENT(2, 0x7  /*volume*/, 127, 127)}, // Vol=max
+  {EXIT_PIN, Momentary, CNTL_EVENT(3, 0x7  /*volume*/, 127, 127)},
   {EXIT_PIN, Momentary, CNTL_EVENT(4, 0x7  /*volume*/, 127, 127)},
-  {EXIT_PIN, Momentary, CNTL_EVENT(3, 0xb  /*expr*/,   127, 127)}, // Expr=max
+  {EXIT_PIN, Momentary, CNTL_EVENT(2, 0xb  /*expr*/,   127, 127)}, // Expr=max
+  {EXIT_PIN, Momentary, CNTL_EVENT(3, 0xb  /*expr*/,   127, 127)},
   {EXIT_PIN, Momentary, CNTL_EVENT(4, 0xb  /*expr*/,   127, 127)},
 
   PROGRAM(1, 91, 0x7000), // 9Draw Org6
