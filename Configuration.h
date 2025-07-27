@@ -142,8 +142,6 @@ const EventMap DefaultEventList[] = {
   {EXIT_PIN, Momentary, CNTL_EVENT(4, 0xb  /*expr*/,   127, 127)},
 
   PROGRAM(1, 90, 0x7000), // 4ZonesBJJ
-  PROGRAM(1, 98, 0x7000), // 4ZonesJOY
-  PROGRAM(1, 99, 0x7000), // BJJViolin
   {INIT_PIN, Momentary, CNTL_EVENT(2, 0x7  /*vol */, 0, 0)}, // Disable layer 2
   {INIT_PIN, Momentary, CNTL_EVENT(3, 0xb  /*expr*/, 0, 0)}, // Disable layer 3
   {INIT_PIN, Momentary, CNTL_EVENT(4, 0xb  /*expr*/, 0, 0)}, // Disable layer 4
@@ -166,12 +164,17 @@ const EventMap DefaultEventList[] = {
   {EXIT_PIN, Momentary, CNTL_EVENT(3, 0xb  /*expr*/,   127, 127)},
   {EXIT_PIN, Momentary, CNTL_EVENT(4, 0xb  /*expr*/,   127, 127)},
 
+  // These are similar to 9-0 4ZonesBjj, but have a split between layers 1 and 2.
+  // So leave layer 2 enabled.
+  PROGRAM(1, 96, 0x7000), // 4ZonesJoySyn
   PROGRAM(1, 97, 0x7000), // 4ZonesBJBass
+  PROGRAM(1, 98, 0x7000), // 4BassSweep
+  PROGRAM(1, 99, 0x7000), // 4ZonesNoOne
   {INIT_PIN, Momentary, CNTL_EVENT(3, 0xb  /*expr*/, 0, 0)}, // Disable layer 3
   {INIT_PIN, Momentary, CNTL_EVENT(4, 0xb  /*expr*/, 0, 0)}, // Disable layer 4
   {INIT_PIN, Momentary, OUTP_EVENT(3, 0x0, 0x0)}, // Turn off LED
   {INIT_PIN, Momentary, OUTP_EVENT(4, 0x0, 0x0)}, // Turn off LED
-  // Pedal controls volume for layers 3 (string) and 4 (pad)
+  // Pedal controls volume for layers 3 and 4
   {0, Continuous,  CNTL_EVENT(3, 0x7  /*volume*/, 110, 0)}, // Layer volume
   {0, Continuous,  CNTL_EVENT(4, 0x7  /*volume*/, 120, 0)},
   // Button 1 controls enable/disable of layer 3 via expression controller
@@ -211,6 +214,7 @@ const EventMap DefaultEventList[] = {
   {EXIT_PIN, Momentary, CNTL_EVENT(3, 0xb  /*expr*/,   127, 127)},
 
   PROGRAM(1, 93, 0x7000), // Illuminated2
+  PROGRAM(1, 94, 0x7000), // IlluminatedP
   {INIT_PIN, Momentary, OUTP_EVENT(3, 0x0, 0x0)}, // Turn off LED
   {INIT_PIN, Momentary, OUTP_EVENT(4, 0x0, 0x0)}, // Turn off LED
   // Pedal controls volume for layer 2 (pad)
