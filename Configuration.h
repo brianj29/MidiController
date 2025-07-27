@@ -112,15 +112,28 @@ const EventMap DefaultEventList[] = {
   // Illegal value, so first in table is only the default.  But
   // a handled bank number, so it's not ignored on initial boot.
   PROGRAM(255, 0, 0x7000),
-  // Turn off modulation on all layers, in case the wheel got bumped
-  {INIT_PIN, Momentary, CNTL_EVENT(1, 0x1  /*modwheel*/, 0, 0)}, // Mod=0
-  {INIT_PIN, Momentary, CNTL_EVENT(2, 0x1  /*modwheel*/, 0, 0)}, // Mod=0
-  {INIT_PIN, Momentary, CNTL_EVENT(3, 0x1  /*modwheel*/, 0, 0)}, // Mod=0
-  {INIT_PIN, Momentary, CNTL_EVENT(4, 0x1  /*modwheel*/, 0, 0)}, // Mod=0
-  // Turn off the LEDs
-  {INIT_PIN, Momentary, OUTP_EVENT(3, 0x0, 0x0)},
-  {INIT_PIN, Momentary, OUTP_EVENT(4, 0x0, 0x0)},
-  // Pedal controlls expression for all layers
+  // Default, for unrecognized programs:  use buttons and pedal to enable/disable
+  // zones 2,3,4 via the "expression" controller.  Default them to "on", i.e. don't
+  // override the program.  Don't modify "volume" or other controllers.
+  // Turn on the LEDs
+  {INIT_PIN, Momentary, OUTP_EVENT(3, 0xff, 0xff)},
+  {INIT_PIN, Momentary, OUTP_EVENT(4, 0xff, 0xff)},
+  // Pedal controls enable/disable of layer 2 via expression controller
+  {0, Momentary, CNTL_EVENT(2, 0xb  /*expr*/,   127, 0)},
+  //   (no LED for layer 2)
+  // Button 1 controls enable/disable of layer 3 via expression controller
+  {1, LatchingOn, CNTL_EVENT(3, 0xb  /*expr*/,   127, 0)},
+  {1, LatchingOn, OUTP_EVENT(3, 0xff, 0x0)}, // Light LED based on input pin
+  // Button 2 does the same for layer 4
+  {2, LatchingOn, CNTL_EVENT(4, 0xb  /*expr*/,   127, 0)}, // Layer 4 enable
+  {2, LatchingOn, OUTP_EVENT(4, 0xff, 0x0)}, // Light LED based on input pin
+  // On exit, restore all expression levels to max
+  {EXIT_PIN, Momentary, CNTL_EVENT(2, 0xb  /*expr*/,   127, 127)},
+  {EXIT_PIN, Momentary, CNTL_EVENT(3, 0xb  /*expr*/,   127, 127)},
+  {EXIT_PIN, Momentary, CNTL_EVENT(4, 0xb  /*expr*/,   127, 127)},
+
+#if 0 // Alternate default setup:  damper/sostenuto/volume
+  // Pedal controls expression for all layers
   {0, Continuous,  CNTL_EVENT(1, 0x0b  /*expression*/, 127, 0)},
   {0, Continuous,  CNTL_EVENT(2, 0x0b  /*expression*/, 127, 0)},
   {0, Continuous,  CNTL_EVENT(3, 0x0b  /*expression*/, 127, 0)},
@@ -140,8 +153,15 @@ const EventMap DefaultEventList[] = {
   {EXIT_PIN, Momentary, CNTL_EVENT(2, 0xb  /*expr*/,   127, 127)},
   {EXIT_PIN, Momentary, CNTL_EVENT(3, 0xb  /*expr*/,   127, 127)},
   {EXIT_PIN, Momentary, CNTL_EVENT(4, 0xb  /*expr*/,   127, 127)},
+#endif // Alternate default setup
 
   PROGRAM(1, 90, 0x7000), // 4ZonesBJJ
+  // Turn off modulation on all layers, in case the wheel got bumped
+  {INIT_PIN, Momentary, CNTL_EVENT(1, 0x1  /*modwheel*/, 0, 0)}, // Mod=0
+  {INIT_PIN, Momentary, CNTL_EVENT(2, 0x1  /*modwheel*/, 0, 0)}, // Mod=0
+  {INIT_PIN, Momentary, CNTL_EVENT(3, 0x1  /*modwheel*/, 0, 0)}, // Mod=0
+  {INIT_PIN, Momentary, CNTL_EVENT(4, 0x1  /*modwheel*/, 0, 0)}, // Mod=0
+  // Initialize layers.  Only use layer 1 (piano) by default
   {INIT_PIN, Momentary, CNTL_EVENT(2, 0x7  /*vol */, 0, 0)}, // Disable layer 2
   {INIT_PIN, Momentary, CNTL_EVENT(3, 0xb  /*expr*/, 0, 0)}, // Disable layer 3
   {INIT_PIN, Momentary, CNTL_EVENT(4, 0xb  /*expr*/, 0, 0)}, // Disable layer 4
